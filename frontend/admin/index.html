@@ -80,10 +80,6 @@
           <span class="nav-icon">🔌</span>
           <span>Diagnóstico de Conexões</span>
         </a>
-        <a href="#" class="nav-item" data-page="security" id="nav-security">
-          <span class="nav-icon">🔒</span>
-          <span>Segurança</span>
-        </a>
       </nav>
 
       <div class="sidebar-footer">
@@ -546,54 +542,6 @@
           </div>
         </section>
 
-        <!-- ========== PAGE: SECURITY ========== -->
-        <section id="page-security" class="page">
-          <div class="page-header">
-            <div class="section-header">
-              <h3 class="section-title">🔒 Segurança do Console</h3>
-              <p class="section-subtitle">Altere o nome de usuário e a senha do Superadmin.</p>
-            </div>
-          </div>
-
-          <div class="security-card">
-            <div class="security-info">
-              <span class="security-title">🔐 Segurança do Console</span>
-              <span class="security-subtitle">Altere o nome de usuário e a senha do Superadmin.</span>
-            </div>
-            <button id="btn-security-config" class="btn btn-primary">⚙️ Configurar</button>
-          </div>
-
-          <!-- Modal Security -->
-          <div id="modal-security" class="modal hidden">
-            <div class="modal-overlay"></div>
-            <div class="modal-content" style="max-width:420px;">
-              <div class="modal-header">
-                <h3>🔐 Alterar Credenciais</h3>
-                <button class="modal-close" id="close-security-modal">&times;</button>
-              </div>
-              <form id="security-form" class="modal-body" novalidate>
-                <div class="form-group">
-                  <label class="form-label" for="security-username">Nome de Usuário</label>
-                  <input type="text" id="security-username" class="form-input" placeholder="superadmin" required>
-                </div>
-                <div class="form-group">
-                  <label class="form-label" for="security-password">Nova Senha</label>
-                  <input type="password" id="security-password" class="form-input" placeholder="••••••••">
-                  <span class="form-help">Deixe em branco para manter a senha atual</span>
-                </div>
-                <div class="form-group">
-                  <label class="form-label" for="security-password-confirm">Confirmar Nova Senha</label>
-                  <input type="password" id="security-password-confirm" class="form-input" placeholder="••••••••">
-                </div>
-                <div class="modal-footer">
-                  <button type="button" class="btn btn-ghost" id="cancel-security">Cancelar</button>
-                  <button type="submit" class="btn btn-primary">Salvar</button>
-                </div>
-              </form>
-            </div>
-          </div>
-        </section>
-
       </div>
     </main>
   </div>
@@ -611,7 +559,6 @@
   <script src="/admin/js/admin-financial.js?v=2"></script>
   <script src="/admin/js/admin-logs.js?v=2"></script>
   <script src="/admin/js/admin-connections.js?v=2"></script>
-  <script src="/admin/js/admin-security.js?v=2"></script>
   <script src="/admin/js/admin-app.js?v=2"></script>
 </body>
 </html>

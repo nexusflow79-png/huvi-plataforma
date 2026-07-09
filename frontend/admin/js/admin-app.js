@@ -38,7 +38,6 @@ const AdminApp = (() => {
       case 'financial':   AdminFinancial.load(); break;
       case 'logs':        AdminLogs.load(); break;
       case 'connections': AdminConnections.load(); break;
-      case 'security':    break; // No load needed
     }
   }
 
@@ -49,7 +48,6 @@ const AdminApp = (() => {
     AdminFinancial.init();
     AdminLogs.init();
     AdminConnections.init();
-    AdminSecurity.init();
     AdminAuth.init();
 
     // Listen to page changes
