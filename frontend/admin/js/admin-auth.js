@@ -35,6 +35,13 @@ const AdminAuth = (() => {
   function logout() {
     AdminSafeStorage.del('huvi_admin_session');
     AdminSafeStorage.del('huvi_admin_session_token');
+    
+    // Limpar formulário de login por segurança
+    const userField = document.getElementById('admin-login-user');
+    const passField = document.getElementById('admin-login-pass');
+    if (userField) userField.value = '';
+    if (passField) passField.value = '';
+    
     showScreen('auth');
   }
 
