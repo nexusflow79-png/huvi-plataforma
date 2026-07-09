@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="canonical" href="https://huvi.app.br/offer.html">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://huvi.app.br/offer.html">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="robots" content="index, follow">
+  <title id="page-title">Oferta Especial — HUVI</title>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    "name": "Oferta HUVI",
+    "description": "Oferta especial da plataforma HUVI — Hub de Vendas Inteligente",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "BRL"
+    }
+  }
+  </script>
+  
+  <!-- CSS Base (Usamos as mesmas variáveis do App) -->
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/components.css">
+  
+  <style>
+    /* Estilos específicos para a Landing Page (Limpa e Focada em Conversão) */
+    :root {
+      --lp-bg: #0d0f12;
+      --lp-card: #15181d;
+      --lp-primary: #f47001; /* Laranja HUVI */
+      --lp-text: #f0f0f0;
+      --lp-muted: #8b929e;
+    }
+    
+    body {
+      background-color: var(--lp-bg);
+      color: var(--lp-text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    #loading-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      width: 100%;
+    }
+
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid rgba(244, 112, 1, 0.2);
+      border-radius: 50%;
+      border-top-color: var(--lp-primary);
+      animation: spin 1s ease-in-out infinite;
+      margin-bottom: 20px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .lp-container {
+      width: 100%;
+      max-width: 600px; /* Layout focado, excelente para mobile */
+      margin: 40px auto;
+      padding: 20px;
+      background: var(--lp-card);
+      border-radius: 16px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+      border: 1px solid rgba(255,255,255,0.05);
+      display: none; /* hidden initially */
+    }
+
+    .media-container {
+      width: 100%;
+      border-radius: 12px;
+      overflow: hidden;
+      margin-bottom: 24px;
+      background: #000;
+      position: relative;
+    }
+
+    .media-container img {
+      width: 100%;
+      height: auto;
+      display: block;
+      object-fit: cover;
+      max-height: 400px;
+    }
+
+    .video-wrapper {
+      position: relative;
+      padding-bottom: 56.25%; /* 16:9 */
+      height: 0;
+    }
+    .video-wrapper iframe {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    .offer-title {
+      font-size: 28px;
+      font-weight: 800;
+      line-height: 1.2;
+      margin: 0 0 12px 0;
+      background: linear-gradient(90deg, #fff, #aaa);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .offer-description {
+      font-size: 16px;
+      line-height: 1.6;
+      color: var(--lp-muted);
+      margin: 0 0 30px 0;
+      white-space: pre-wrap;
+    }
+
+    .price-box {
+      background: rgba(244, 112, 1, 0.1);
+      border: 1px solid rgba(244, 112, 1, 0.2);
+      border-radius: 12px;
+      padding: 20px;
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .price-label {
+      font-size: 14px;
+      color: var(--lp-primary);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .price-value {
+      font-size: 36px;
+      font-weight: 800;
+      color: #fff;
+    }
+
+    .checkout-btn {
+      display: block;
+      width: 100%;
+      background: var(--lp-primary);
+      color: #fff;
+      text-align: center;
+      padding: 18px 20px;
+      font-size: 18px;
+      font-weight: 700;
+      text-decoration: none;
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(244, 112, 1, 0.4);
+      transition: all 0.3s ease;
+      cursor: pointer;
+      border: none;
+    }
+
+    .checkout-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(244, 112, 1, 0.6);
+      background: #f88117;
+    }
+
+    .checkout-btn:active {
+      transform: translateY(1px);
+    }
+
+    .secure-badge {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 16px;
+      color: var(--lp-muted);
+      font-size: 13px;
+    }
+
+    .error-state {
+      text-align: center;
+      padding: 40px 20px;
+      display: none;
+    }
+
+    .error-icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+    }
+
+    @media (max-width: 640px) {
+      .lp-container {
+        margin: 0;
+        min-height: 100vh;
+        border-radius: 0;
+        border: none;
+        padding: 20px 15px;
+      }
+      .offer-title {
+        font-size: 24px;
+      }
+      .price-value {
+        font-size: 32px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Loading -->
+  <div id="loading-state">
+    <div class="spinner"></div>
+    <div style="color: var(--lp-muted); font-size: 14px;">Carregando oferta...</div>
+  </div>
+
+  <!-- Erro -->
+  <div id="error-state" class="error-state">
+    <div class="error-icon">😕</div>
+    <h3 style="margin:0 0 10px 0;">Oferta Indisponível</h3>
+    <p style="color: var(--lp-muted); margin:0;">Esta oferta não foi encontrada ou não está mais ativa.</p>
+  </div>
+
+  <!-- Conteúdo da LP -->
+  <div id="lp-container" class="lp-container">
+    
+    <div id="media-wrapper" class="media-container hidden">
+      <!-- Injetado via JS -->
+    </div>
+
+    <h1 id="lp-title" class="offer-title"></h1>
+    <p id="lp-description" class="offer-description"></p>
+
+    <div id="price-wrapper" class="price-box hidden">
+      <div class="price-label">Investimento</div>
+      <div id="lp-price" class="price-value"></div>
+    </div>
+
+    <a id="lp-checkout-btn" href="#" target="_blank" class="checkout-btn">
+      Garantir Minha Vaga / Comprar Agora
+    </a>
+
+    <div class="secure-badge">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+      Pagamento Seguro via Asaas
+    </div>
+
+  </div>
+
+  <!-- Scripts base do Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/config.js"></script>
+  
+  <!-- Lógica da Página -->
+  <script src="js/offer.js"></script>
+</body>
+</html>

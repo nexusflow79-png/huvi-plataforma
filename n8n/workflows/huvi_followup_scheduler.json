@@ -1,0 +1,140 @@
+{
+  "name": "HUVI_Followup_Scheduler",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 1
+            }
+          ]
+        }
+      },
+      "id": "ScheduleTrigger",
+      "name": "A cada 1 hora",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [100, 300]
+    },
+    {
+      "credentials": {
+        "supabaseApi": {
+          "id": "8TEbcDMv4pFPkspM",
+          "name": "HUVIbase"
+        }
+      },
+      "id": "FetchApprovedCampaigns",
+      "name": "Buscar Campanhas Ativas",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "campaigns",
+        "filters": {
+          "conditions": [
+            {
+              "condition": "eq",
+              "keyName": "status",
+              "keyValue": "approved"
+            },
+            {
+              "condition": "is",
+              "keyName": "deleted_at",
+              "keyValue": "null"
+            }
+          ]
+        }
+      },
+      "position": [320, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const campaigns = $input.all().map(e => e.json);\nconst now = new Date();\nconst ready = [];\n\nfor (const camp of campaigns) {\n  if (!camp.messages_matrix) continue;\n\n  let matrix;\n  try {\n    matrix = typeof camp.messages_matrix === 'string'\n      ? JSON.parse(camp.messages_matrix)\n      : camp.messages_matrix;\n  } catch(e) { continue; }\n\n  if (!Array.isArray(matrix) || matrix.length === 0) continue;\n\n  const currentStep = camp.current_step || 1;\n  const stepIndex = currentStep - 1;\n\n  if (stepIndex >= matrix.length) continue;\n\n  const stepData = matrix[stepIndex];\n  const delayDays = stepData.delay_days || 0;\n  const lastSent = camp.last_sent_at\n    ? new Date(camp.last_sent_at)\n    : new Date(camp.created_at);\n\n  const elapsedMs = now.getTime() - lastSent.getTime();\n  const requiredMs = delayDays * 24 * 60 * 60 * 1000;\n\n  if (elapsedMs >= requiredMs) {\n    ready.push(camp);\n  }\n}\n\nreturn ready.map(c => ({ json: c }));"
+      },
+      "id": "FilterReadyForSend",
+      "name": "Filtrar Prontos para Envio",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [540, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nreturn items.map(item => ({\n  json: item.json\n}));"
+      },
+      "id": "WrapForDispatcher",
+      "name": "Empacotar para Dispatcher",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [760, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:5678/webhook/huvi-dispatcher",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json }}",
+        "options": {},
+        "contentType": "json"
+      },
+      "id": "CallDispatcher",
+      "name": "Chamar Dispatcher",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [980, 300],
+      "onError": "continueRegularOutput"
+    }
+  ],
+  "connections": {
+    "A cada 1 hora": {
+      "main": [
+        [
+          {
+            "index": 0,
+            "node": "Buscar Campanhas Ativas",
+            "type": "main"
+          }
+        ]
+      ]
+    },
+    "Buscar Campanhas Ativas": {
+      "main": [
+        [
+          {
+            "index": 0,
+            "node": "Filtrar Prontos para Envio",
+            "type": "main"
+          }
+        ]
+      ]
+    },
+    "Filtrar Prontos para Envio": {
+      "main": [
+        [
+          {
+            "index": 0,
+            "node": "Empacotar para Dispatcher",
+            "type": "main"
+          }
+        ]
+      ]
+    },
+    "Empacotar para Dispatcher": {
+      "main": [
+        [
+          {
+            "index": 0,
+            "node": "Chamar Dispatcher",
+            "type": "main"
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

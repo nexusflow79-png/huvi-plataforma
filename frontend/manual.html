@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Manual do Usuário Tenant — HUVI (Hub de Vendas Inteligente)">
+  <link rel="canonical" href="https://huvi.app.br/manual.html">
+  <meta property="og:title" content="Manual do Usuário Tenant — HUVI">
+  <meta property="og:description" content="Guia completo de uso da plataforma HUVI — Hub de Vendas Inteligente.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://huvi.app.br/manual.html">
+  <meta name="twitter:card" content="summary_large_image">
+  <title>Manual do Usuário Tenant — HUVI</title>
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --primary: #f47001;
+      --primary-hover: #f57e1a;
+      --primary-light: #fdf0e5;
+      --bg: #faf7f5;
+      --card-bg: #ffffff;
+      --text-main: #2b1406;
+      --text-muted: #5c4333;
+      --border: #fce2cc;
+      --font: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      --success: #37b24d;
+      --success-bg: #ebfbee;
+      --warning: #f59f00;
+      --warning-bg: #fff9db;
+      --info: #f47001;
+      --info-bg: #fdf0e5;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: var(--font);
+      background-color: var(--bg);
+      color: var(--text-main);
+      line-height: 1.6;
+      font-size: 16px;
+      display: flex;
+    }
+
+    /* Sidebar de Navegação */
+    .sidebar {
+      width: 280px;
+      height: 100vh;
+      background-color: var(--card-bg);
+      border-right: 1px solid var(--border);
+      position: fixed;
+      top: 0;
+      left: 0;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      z-index: 10;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 30px;
+      text-decoration: none;
+    }
+
+    .brand-logo {
+      font-size: 24px;
+    }
+
+    .brand-title {
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--primary);
+      letter-spacing: 0.5px;
+    }
+
+    .menu-title {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--text-muted);
+      margin-bottom: 15px;
+      font-weight: 700;
+    }
+
+    .nav-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .nav-link {
+      display: block;
+      padding: 10px 14px;
+      border-radius: 8px;
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 500;
+      transition: all 0.2s ease;
+    }
+
+    .nav-link:hover {
+      background-color: var(--primary-light);
+      color: var(--primary);
+      transform: translateX(4px);
+    }
+
+    .nav-link.active {
+      background-color: var(--primary);
+      color: #fff;
+    }
+
+    /* Conteúdo Principal */
+    .content-wrapper {
+      margin-left: 280px;
+      flex: 1;
+      padding: 40px 60px;
+      max-width: 1000px;
+    }
+
+    .header-badge {
+      display: inline-block;
+      padding: 6px 12px;
+      background-color: var(--primary-light);
+      color: var(--primary);
+      font-size: 12px;
+      font-weight: 700;
+      border-radius: 20px;
+      margin-bottom: 16px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    h1 {
+      font-size: 38px;
+      font-weight: 800;
+      color: var(--text-main);
+      line-height: 1.2;
+      margin-bottom: 12px;
+    }
+
+    .subtitle {
+      font-size: 18px;
+      color: var(--text-muted);
+      margin-bottom: 40px;
+      font-weight: 400;
+    }
+
+    hr {
+      border: 0;
+      height: 1px;
+      background: var(--border);
+      margin: 40px 0;
+    }
+
+    /* Estilos de Seção */
+    section {
+      margin-bottom: 60px;
+      scroll-margin-top: 40px;
+    }
+
+    h2 {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--text-main);
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    h3 {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text-main);
+      margin-top: 24px;
+      margin-bottom: 12px;
+    }
+
+    p {
+      margin-bottom: 18px;
+      color: var(--text-muted);
+    }
+
+    /* Listas */
+    ul, ol {
+      margin-bottom: 18px;
+      padding-left: 24px;
+      color: var(--text-muted);
+    }
+
+    li {
+      margin-bottom: 8px;
+    }
+
+    strong {
+      color: var(--text-main);
+    }
+
+    /* Imagens de Telas */
+    .image-wrapper {
+      margin: 24px 0;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      background-color: #fff;
+      box-shadow: 0 4px 12px rgba(43, 20, 6, 0.04);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .image-wrapper:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(43, 20, 6, 0.08);
+    }
+
+    .image-wrapper img {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    .image-caption {
+      padding: 10px 16px;
+      background-color: var(--primary-light);
+      border-top: 1px solid var(--border);
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--primary);
+      text-align: center;
+    }
+
+    /* Alertas e Callouts */
+    .alert {
+      padding: 16px 20px;
+      border-radius: 10px;
+      margin-bottom: 24px;
+      border-left: 4px solid;
+    }
+
+    .alert-note {
+      background-color: var(--info-bg);
+      border-left-color: var(--info);
+      color: var(--text-main);
+    }
+
+    .alert-warning {
+      background-color: var(--warning-bg);
+      border-left-color: var(--warning);
+      color: var(--text-main);
+    }
+
+    .alert-title {
+      font-weight: 700;
+      margin-bottom: 6px;
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* Estilo de código e tabelas */
+    code {
+      font-family: 'Fira Code', monospace;
+      font-size: 14px;
+      background-color: var(--primary-light);
+      color: var(--primary);
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    /* Responsivo */
+    @media (max-width: 900px) {
+      body {
+        flex-direction: column;
+      }
+      .sidebar {
+        width: 100%;
+        height: auto;
+        position: relative;
+        border-right: none;
+        border-bottom: 1px solid var(--border);
+      }
+      .content-wrapper {
+        margin-left: 0;
+        padding: 30px 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <a href="/" class="brand">
+      <span class="brand-logo">⚡</span>
+      <span class="brand-title">HUVI</span>
+    </a>
+    
+    <div class="menu-title">Conteúdo</div>
+    <nav class="nav-list">
+      <a href="#intro" class="nav-link">Introdução</a>
+      <a href="#acesso" class="nav-link">1. Primeiro Acesso</a>
+      <a href="#dashboard" class="nav-link">2. O Dashboard</a>
+      <a href="#ofertas" class="nav-link">3. Gerenciar Ofertas</a>
+      <a href="#fontes" class="nav-link">4. Capturar Leads</a>
+      <a href="#oportunidades" class="nav-link">5. Pipeline e IA</a>
+      <a href="#campanhas" class="nav-link">6. Campanhas</a>
+      <a href="#conversoes" class="nav-link">7. Conversões</a>
+      <a href="#configuracoes" class="nav-link">8. Configurações</a>
+      <a href="#boas-praticas" class="nav-link">9. Boas Práticas</a>
+    </nav>
+  </aside>
+
+  <!-- Conteúdo Principal -->
+  <main class="content-wrapper">
+    <span class="header-badge">E-book Oficial</span>
+    <h1>Manual do Usuário Tenant — HUVI</h1>
+    <p class="subtitle">O Guia Definitivo para Escalar suas Vendas com Inteligência Artificial e Automação</p>
+    
+    <hr>
+
+    <!-- Seção Introdução -->
+    <section id="intro">
+      <h2>📖 Introdução: O que é o HUVI?</h2>
+      <p>O <strong>HUVI (Hub de Vendas Inteligente)</strong> é uma plataforma SaaS multi-tenant inovadora, projetada para transformar produtos, serviços e leads brutos em oportunidades reais de conversão e receita recorrente.</p>
+      <p>A filosofia central do HUVI é baseada no <strong>Princípio do ROI e da Geração de Receita</strong>: o sistema não é projetado com foco em métricas de vaidade, mas sim em métricas reais de negócios: <strong>oportunidades qualificadas</strong>, <strong>campanhas ativas</strong>, <strong>conversões concluídas</strong> e <strong>receita financeira gerada</strong>.</p>
+      <p>Para alcançar esse objetivo de forma comercialmente robusta, o HUVI utiliza uma arquitetura inteligente de agentes baseada no motor <strong>HUVI Brain</strong> integrada a pipelines no <strong>n8n</strong> e armazenamento seguro e isolado no <strong>Supabase</strong>.</p>
+      <p>Este manual guiará você, <strong>Tenant (Cliente do HUVI)</strong>, por todas as abas e ferramentas da plataforma, fornecendo um passo a passo prático para configurar suas ofertas, capturar leads e convertê-los em clientes pagantes.</p>
+    </section>
+
+    <!-- Seção Primeiro Acesso -->
+    <section id="acesso">
+      <h2>🔑 1. Primeiro Acesso e Cadastro</h2>
+      <p>Para iniciar no HUVI, você deve acessar o endereço do aplicativo e criar sua conta comercial.</p>
+      <ol>
+        <li>Acesse a tela inicial do HUVI no navegador.</li>
+        <li>No formulário de login, clique no link <strong>"Criar conta"</strong>.</li>
+        <li>Preencha seu <strong>Nome Completo</strong>, seu <strong>E-mail corporativo</strong> e defina uma <strong>Senha de acesso</strong> (mínimo de 8 caracteres).</li>
+        <li>Clique em <strong>Criar conta</strong>.</li>
+      </ol>
+      <div class="alert alert-note">
+        <div class="alert-title">Nota Técnica de Segurança</div>
+        Durante o registro, o HUVI executa um gatilho de onboarding no banco de dados, configurando atomicamente suas preferências de comunicação, criando seu perfil de empresa e preparando seu ambiente isolado de dados (RLS). Nenhuma outra empresa poderá acessar os seus contatos ou estratégias.
+      </div>
+    </section>
+
+    <!-- Seção Dashboard -->
+    <section id="dashboard">
+      <h2>📊 2. O Dashboard Principal</h2>
+      <p>Ao fazer login na plataforma, você será direcionado para o painel de controle central. Esta tela é o seu painel de bordo executivo, fornecendo uma visão macro sobre a saúde do seu funil comercial.</p>
+      
+      <div class="image-wrapper">
+        <img src="assets/manual/dashboard.png" alt="Dashboard do Tenant">
+        <div class="image-caption">Figura 1: Dashboard Principal com os KPIs e gráficos de receita em tempo real.</div>
+      </div>
+
+      <h3>KPIs de Performance:</h3>
+      <ul>
+        <li><strong>Oportunidades:</strong> Quantidade total de leads capturados em suas Fontes de Pesquisa que entraram no pipeline do HUVI.</li>
+        <li><strong>Qualificadas:</strong> Quantidade de oportunidades classificadas pelo agente de IA (<em>Scorer</em>) com alta viabilidade comercial e prontas para prospecção.</li>
+        <li><strong>Campanhas Ativas:</strong> Número de estratégias de engajamento ativo que estão rodando para atrair estes leads.</li>
+        <li><strong>Conversões:</strong> Número de vendas convertidas com sucesso.</li>
+        <li><strong>Receita Gerada:</strong> Total de receita financeira consolidada que entrou no caixa através dos checkouts concluídos.</li>
+      </ul>
+    </section>
+
+    <!-- Seção Ofertas -->
+    <section id="ofertas">
+      <h2>🏷️ 3. Cadastrando e Gerenciando Ofertas</h2>
+      <p>A <strong>Oferta</strong> é o coração da sua estratégia de vendas no HUVI. Ela descreve o que você vende, qual o valor e para onde os leads devem ser direcionados para fechar o negócio.</p>
+
+      <div class="image-wrapper">
+        <img src="assets/manual/offers.png" alt="Ofertas do Tenant">
+        <div class="image-caption">Figura 2: Aba de Ofertas, onde é realizado o cadastro de produtos e serviços.</div>
+      </div>
+
+      <h3>Como cadastrar uma nova oferta:</h3>
+      <ol>
+        <li>Vá até o menu lateral esquerdo e clique em <strong>Ofertas</strong>.</li>
+        <li>Clique no botão <strong>+ Nova Oferta</strong> no canto superior direito.</li>
+        <li>Preencha os campos:
+          <ul>
+            <li><strong>Nome da Oferta:</strong> Título comercial do seu produto ou serviço.</li>
+            <li><strong>Descrição:</strong> Texto detalhado sobre as dores que o produto resolve e diferenciais.</li>
+            <li><strong>Imagem da Oferta:</strong> Faça upload de uma imagem representativa de até 2MB.</li>
+            <li><strong>URL de Vídeo:</strong> Link do YouTube ou Instagram demonstrativo.</li>
+            <li><strong>Preço (R$):</strong> Valor cobrado pelo produto/serviço.</li>
+            <li><strong>URL Landing Page:</strong> Link externo do seu site comercial.</li>
+            <li><strong>URL Checkout (Asaas):</strong> Link de pagamento direto do Asaas onde a transação financeira ocorrerá.</li>
+            <li><strong>URL Calendário:</strong> Link do Nexus Agenda para agendamento automático de chamadas comerciais.</li>
+          </ul>
+        </li>
+        <li>Clique em <strong>Salvar</strong>.</li>
+      </ol>
+
+        <div class="alert alert-info">
+          <div class="alert-title">💡 Ofertas Ativas</div>
+          Você pode ter mais de uma oferta ativa simultaneamente no sistema. As ofertas ativas ficarão disponíveis para a sequência dos processos e criação de campanhas no HUVI.
+        </div>
+    </section>
+
+    <!-- Seção Fontes -->
+    <section id="fontes">
+      <h2>🔗 4. Capturando Leads (Fontes de Pesquisa)</h2>
+      <p>As <strong>Fontes de Pesquisa</strong> definem de onde virão os seus clientes em potencial. O HUVI é compatível com canais automáticos e manuais de captação.</p>
+
+      <div class="image-wrapper">
+        <img src="assets/manual/sources.png" alt="Fontes de Pesquisa">
+        <div class="image-caption">Figura 3: Aba de Fontes de Pesquisa de Oportunidades.</div>
+      </div>
+
+      <h3>Tipos de Fontes Suportadas:</h3>
+      <ul>
+        <li><strong>Google Maps:</strong> Prospecção de negócios locais por geolocalização e palavras-chave.</li>
+        <li><strong>Instagram:</strong> Prospecção baseada em perfis de concorrentes ou nichos.</li>
+        <li><strong>Website:</strong> Rastreamento de sites institucionais específicos.</li>
+        <li><strong>Manual:</strong> Cadastro individual de um lead específico.</li>
+        <li><strong>Diretório:</strong> Permite importar listas de leads em lotes a partir de arquivos CSV ou planilhas.</li>
+      </ul>
+
+      <h3 id="upload-de-arquivos-e-mapeamento-de-colunas">Upload de Arquivos e Mapeamento de Colunas</h3>
+      <p>Caso você tenha uma lista de contatos em uma planilha, você pode usar a importação via diretório:</p>
+      <ol>
+        <li>Clique em <strong>+ Nova Fonte</strong> na tela de Fontes de Pesquisa.</li>
+        <li>Selecione a opção <strong>Diretório</strong> entre os tipos de fonte.</li>
+        <li>Arraste ou selecione seu arquivo <code>CSV</code> ou <code>XLSX</code> (limite de 5MB).</li>
+        <li>O HUVI abrirá automaticamente o modal de <strong>Mapear Colunas</strong> com um preview dos seus dados.</li>
+        <li>Associe as colunas da sua planilha com os campos oficiais do HUVI (Nome da Empresa, Contato, E-mail, Telefone, Cidade, UF).</li>
+        <li>Clique em <strong>Importar</strong>.</li>
+      </ol>
+    </section>
+
+    <!-- Seção Oportunidades -->
+    <section id="oportunidades">
+      <h2>🎯 5. O Pipeline de Vendas (Oportunidades)</h2>
+      <p>Após a importação ou captação das fontes, seus leads aparecem no menu <strong>Oportunidades</strong>. É aqui que o motor de Inteligência Artificial do HUVI entra em ação.</p>
+
+      <div class="image-wrapper">
+        <img src="assets/manual/opportunities.png" alt="Oportunidades do Tenant">
+        <div class="image-caption">Figura 4: Aba de Oportunidades mostrando o pipeline e o status dos contatos.</div>
+      </div>
+
+      <p>Cada lead passa por um pipeline de enriquecimento e tomada de decisão automática pelos agentes do HUVI:</p>
+      <ol>
+        <li><strong>Descoberta (discovered):</strong> Lead recém-capturado com dados brutos.</li>
+        <li><strong>Enriquecida (enriched):</strong> Informações adicionais buscadas automaticamente.</li>
+        <li><strong>Diagnosticada (audited):</strong> A IA do <em>Auditor</em> analisa as fraquezas e oportunidades comerciais do lead.</li>
+        <li><strong>Classificada (scored):</strong> O <em>Scorer</em> pontua o lead para priorizar os melhores negócios.</li>
+        <li><strong>Estratégia (strategy_defined):</strong> O <em>Strategist</em> desenha a melhor abordagem para abordar o cliente.</li>
+        <li><strong>Campanha (campaign_created):</strong> Copy de vendas personalizado gerado pelo <em>Campaign</em>.</li>
+        <li><strong>Contatada (contacted):</strong> O <em>Dispatcher</em> disparou a primeira mensagem (WhatsApp/E-mail).</li>
+        <li><strong>Em Conversa (in_conversation):</strong> O lead respondeu e o agente <em>SDR</em> assumiu o diálogo.</li>
+        <li><strong>Convertida (converted):</strong> O cliente efetuou o pagamento.</li>
+      </ol>
+
+      <h3 id="abas-do-modal-de-detalhes">Abas do Modal de Detalhes da Oportunidade</h3>
+      <p>Ao clicar em qualquer linha de oportunidade na tabela, você verá um modal robusto contendo o histórico e a análise profunda da IA para aquele lead:</p>
+      <ul>
+        <li><strong>Informações:</strong> Dados básicos cadastrados do contato (Empresa, Contato, E-mail, Telefone, Website, Cidade, UF).</li>
+        <li><strong>Diagnóstico (Agente Auditor):</strong> Mostra uma análise aprofundada gerada pela IA sobre o posicionamento atual, <em>Pontos Fortes (🎯)</em>, <em>Pontos Fracos (⚠️)</em> e as <em>Recomendações Comerciais (💡)</em> de melhoria.</li>
+        <li><strong>Classificação (Agente Scorer):</strong> Mostra o <em>Score Comercial</em> (0-100) e o <em>Score de Viabilidade</em> (0-100), além da justificativa.</li>
+        <li><strong>Estratégia (Agente Strategist):</strong> Mostra o plano de abordagem sugerido, o Tipo de Conversão recomendado (Direta, Agendamento ou Híbrida) e o link de destino.</li>
+      </ul>
+    </section>
+
+    <!-- Seção Campanhas -->
+    <section id="campanhas">
+      <h2>📢 6. Engajamento Automático (Campanhas)</h2>
+      <p>A aba <strong>Campanhas</strong> gerencia as prospecções ativas criadas de forma personalizada para cada um dos seus leads.</p>
+
+      <div class="image-wrapper">
+        <img src="assets/manual/campaigns.png" alt="Campanhas do Tenant">
+        <div class="image-caption">Figura 5: Visualização das Campanhas personalizadas geradas pela IA.</div>
+      </div>
+
+      <ul>
+        <li>O agente <strong>Campaign</strong> reúne o diagnóstico específico daquele lead e a sua oferta ativa para escrever uma mensagem de copy extremamente direcionada.</li>
+        <li>O **Dispatcher** cuida do envio automático dessa copy pelo canal habilitado (WhatsApp ou E-mail), atualizando o status para **Enviada** ou **Falhou** no painel de acompanhamento.</li>
+      </ul>
+    </section>
+
+    <!-- Seção Conversões -->
+    <section id="conversoes">
+      <h2>💰 7. Acompanhamento de Conversões</h2>
+      <p>Toda vez que um lead realiza um checkout bem-sucedido no Asaas ou conclui uma reunião de fechamento via Nexus, o HUVI registra o evento de conversão.</p>
+
+      <div class="image-wrapper">
+        <img src="assets/manual/conversions.png" alt="Conversões do Tenant">
+        <div class="image-caption">Figura 6: Histórico de Vendas Convertidas e valores recebidos.</div>
+      </div>
+
+      <p>A tela de Conversões mantém o histórico detalhado contendo o nome da empresa convertida, o tipo de conversão realizada (Direta, Agendamento ou Híbrida), o valor previsto e o valor real consolidado da venda.</p>
+    </section>
+
+    <!-- Seção Configurações -->
+    <section id="configuracoes">
+      <h2>⚙️ 8. Configurações Gerais e Regras de Comunicação</h2>
+      <p>No menu <strong>Configurações</strong>, você controla o comportamento da sua conta e da automação de mensagens, dividido em três abas principais:</p>
+
+      <div class="image-wrapper">
+        <img src="assets/manual/settings.png" alt="Configurações do Tenant">
+        <div class="image-caption">Figura 7: Aba de Configurações de Empresa, Perfil e Comunicação.</div>
+      </div>
+
+      <ol>
+        <li><strong>Empresa:</strong> Dados cadastrais da empresa e exibição do seu plano HUVI atual.</li>
+        <li><strong>Perfil:</strong> Seu nome, e-mail e senha de login na plataforma.</li>
+        <li><strong>Comunicação:</strong>
+          <ul>
+            <li><em>Canais Habilitados:</em> Chaves para ligar ou desligar os envios automáticos por WhatsApp e E-mail.</li>
+            <li><em>Horário Silencioso (ex: 22:00 às 08:00):</em> Faixa de horário em que o Dispatcher fica proibido de enviar qualquer mensagem comercial, garantindo profissionalismo e conformidade com o horário comercial do lead.</li>
+          </ul>
+        </li>
+      </ol>
+    </section>
+
+    <!-- Seção Boas Práticas -->
+    <section id="boas-praticas">
+      <h2>💡 9. Boas Práticas para Maximizar seus Resultados</h2>
+      <p>Para obter o máximo desempenho comercial com o HUVI, siga estas diretrizes recomendadas:</p>
+      <ul>
+        <li><strong>Mantenha uma única Oferta clara e concisa:</strong> Garanta que a descrição contenha informações específicas sobre as dores que você resolve e os links da Landing Page/Checkout estejam corretos. A IA utilizará estes dados para gerar as copys.</li>
+        <li><strong>Crie Fontes específicas:</strong> Ao nomear suas Fontes de Pesquisa, use títulos claros (ex: "Clínicas Zona Sul SP"). Isso ajuda a rastrear quais fontes e nichos trazem a maior taxa de conversão e receita.</li>
+        <li><strong>Respeite o Horário Silencioso:</strong> Configure o horário de silêncio de acordo com o fuso horário local dos seus leads para evitar abordagens inconvenientes durante a noite ou fins de semana.</li>
+        <li><strong>Analise os Diagnósticos da IA:</strong> Antes de entrar em reuniões agendadas ou interagir manualmente, leia a aba "Diagnóstico" e "Estratégia" na tela de Oportunidades. A IA fornece atalhos valiosos de argumentação comercial que aceleram o fechamento de vendas.</li>
+      </ul>
+    </section>
+
+    <hr>
+    
+    <footer style="text-align: center; padding: 20px 0; color: var(--text-muted); font-size: 14px;">
+      HUVI — Hub de Vendas Inteligente &copy; 2026. Todos os direitos reservados.
+    </footer>
+  </main>
+
+  <script>
+    // Navegação Ativa na Sidebar com base no scroll
+    const sections = document.querySelectorAll('section');
+    const navLinks = document.querySelectorAll('.nav-link');
+
+    window.addEventListener('scroll', () => {
+      let current = '';
+      sections.forEach(section => {
+        const sectionTop = section.offsetTop;
+        const sectionHeight = section.clientHeight;
+        if (pageYOffset >= (sectionTop - 80)) {
+          current = section.getAttribute('id');
+        }
+      });
+
+      navLinks.forEach(link => {
+        link.classList.remove('active');
+        if (link.getAttribute('href').slice(1) === current) {
+          link.classList.add('active');
+        }
+      });
+    });
+  </script>
+</body>
+</html>

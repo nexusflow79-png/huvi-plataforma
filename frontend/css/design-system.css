@@ -1,0 +1,240 @@
+/* ============================================================
+   HUVI — Design System
+   Hub de Vendas Inteligente
+   ============================================================ */
+
+/* ============================================================
+   CSS RESET & BASE
+   ============================================================ */
+*, *::before, *::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  /* ── Cores Primárias (Escala Oficial Laranja - paleta-nova) ── */
+  --primary-50:  #fdf0e5;
+  --primary-100: #fce2cc;
+  --primary-200: #fbd4b2;
+  --primary-300: #fac599;
+  --primary-400: #f9b780;
+  --primary-500: #f47001; /* Laranja Principal */
+  --primary-600: #f57e1a; /* Laranja Médio */
+  --primary-700: #f68c33; /* Laranja Suave */
+  --primary-800: #f79a4d;
+  --primary-900: #f8a966;
+
+  /* ── Cores de Superfície (Light Peach/Orange Mode) ── */
+  --surface-0:   #ffffff; /* Sidebar (Branco Puro para destacar) */
+  --surface-50:  #fdf0e5; /* Body/Main background (Pêssego muito claro) */
+  --surface-100: #ffffff; /* Header e painéis secundários translúcidos */
+  --surface-200: #ffffff; /* Cards, KPIs, tabelas (Branco puro para destacar) */
+  --surface-300: #fce2cc; /* Divisores e linhas sutis */
+  --surface-400: #fbd4b2; /* Bordas de inputs e componentes */
+  --surface-500: #fac599; /* Estado de hover e focos */
+  --surface-600: #f9b780;
+  --surface-700: #f8a966;
+  --surface-800: #f79a4d;
+  --surface-900: #f68c33;
+
+  /* ── Texto (Escuro Terroso para Contraste em Modo Claro) ── */
+  --text-primary:   #2b1406; /* Marrom-escuro terroso quase preto */
+  --text-secondary: #5c4333; /* Marrom-médio */
+  --text-muted:     #8f7464; /* Marrom-claro mutado */
+  --text-inverse:   #ffffff; /* Texto branco sobre laranjas */
+
+  /* ── Status ── */
+  --success-400: #51cf66;
+  --success-500: #40c057;
+  --success-600: #37b24d;
+  --warning-400: #fcc419;
+  --warning-500: #fab005;
+  --error-400:   #ff6b6b;
+  --error-500:   #fa5252;
+  --info-400:    #ffaa66;
+  --info-500:    #f47001;
+
+  /* ── Gradientes ── */
+  --gradient-brand: linear-gradient(135deg, #f47001 0%, #f57e1a 50%, #f68c33 100%);
+  --gradient-card:  linear-gradient(135deg, rgba(244, 112, 1, 0.05) 0%, rgba(246, 140, 51, 0.02) 100%);
+  --gradient-glow:  radial-gradient(circle at 50% 0%, rgba(244, 112, 1, 0.1) 0%, transparent 60%);
+
+  /* ── Tipografia ── */
+  --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-xs:   0.75rem;   /* 12px */
+  --font-sm:   0.8125rem; /* 13px */
+  --font-base: 0.875rem;  /* 14px */
+  --font-md:   1rem;      /* 16px */
+  --font-lg:   1.125rem;  /* 18px */
+  --font-xl:   1.25rem;   /* 20px */
+  --font-2xl:  1.5rem;    /* 24px */
+  --font-3xl:  1.875rem;  /* 30px */
+  --font-4xl:  2.25rem;   /* 36px */
+
+  /* ── Espaçamento ── */
+  --space-1:  0.25rem;
+  --space-2:  0.5rem;
+  --space-3:  0.75rem;
+  --space-4:  1rem;
+  --space-5:  1.25rem;
+  --space-6:  1.5rem;
+  --space-8:  2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+
+  /* ── Bordas ── */
+  --radius-sm:   6px;
+  --radius-md:   10px;
+  --radius-lg:   14px;
+  --radius-xl:   20px;
+  --radius-full: 9999px;
+
+  /* ── Sombras (Suavizadas para o Modo Claro) ── */
+  --shadow-sm:   0 1px 3px rgba(43, 20, 6, 0.06);
+  --shadow-md:   0 6px 16px rgba(43, 20, 6, 0.08);
+  --shadow-lg:   0 12px 32px rgba(43, 20, 6, 0.12);
+  --shadow-glow: 0 0 20px rgba(244, 112, 1, 0.15);
+
+  /* ── Transições ── */
+  --transition-fast:   150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-normal: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow:   400ms cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* ── Layout ── */
+  --sidebar-width: 240px;
+  --sidebar-collapsed: 68px;
+  --header-height: 60px;
+  --bottom-nav-height: 64px;
+}
+
+html {
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-family: var(--font-family);
+  font-size: var(--font-base);
+  color: var(--text-primary);
+  background-color: var(--surface-50);
+  line-height: 1.6;
+  overflow-x: hidden;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+a {
+  color: var(--primary-400);
+  text-decoration: none;
+  transition: color var(--transition-fast);
+}
+
+a:hover {
+  color: var(--primary-300);
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+/* ============================================================
+   SCROLLBAR
+   ============================================================ */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--surface-500);
+  border-radius: var(--radius-full);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--surface-600);
+}
+
+/* ============================================================
+   SCREEN MANAGEMENT
+   ============================================================ */
+.screen {
+  display: none;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+.screen.active {
+  display: flex;
+}
+
+/* ============================================================
+   UTILITIES
+   ============================================================ */
+.hidden {
+  display: none !important;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0,0,0,0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ============================================================
+   ANIMATIONS
+   ============================================================ */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(24px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes glow {
+  0%, 100% { box-shadow: 0 0 5px rgba(244, 112, 1, 0.1); }
+  50% { box-shadow: 0 0 20px rgba(244, 112, 1, 0.25); }
+}
+
+.animate-fade-in {
+  animation: fadeIn var(--transition-normal) ease-out;
+}
+
+.animate-slide-up {
+  animation: slideUp var(--transition-slow) ease-out;
+}

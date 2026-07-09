@@ -1,0 +1,1131 @@
+{
+  "name": "HUVI_SDR_Agent",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "huvi-sdr-webhook",
+        "options": {}
+      },
+      "id": "Webhook",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $input.first().json.body || $input.first().json;\n\n// A Evolution API manda eventos, geralmente messages.upsert\nif (body.event !== 'messages.upsert') {\n  return []; // Ignorar outros eventos\n}\n\nconst msg = body.data?.message || {};\nconst fromMe = body.data?.key?.fromMe;\nconst remoteJid = body.data?.key?.remoteJid || '';\nconst pushName = body.data?.pushName || '';\nconst instanceName = body.instance || '';\n\n// Ignora mensagens enviadas pelo próprio bot ou de grupos\nif (fromMe || remoteJid.includes('@g.us')) {\n  return [];\n}\n\n// Extrai texto (pode vir em conversation ou extendedTextMessage)\nconst text = msg.conversation || msg.extendedTextMessage?.text || '';\nif (!text) {\n  return [];\n}\n\n// Extrair número limpo\nconst phone = remoteJid.split('@')[0];\n\nreturn [{\n  json: {\n    phone,\n    text,\n    pushName,\n    remoteJid,\n    instanceName\n  }\n}];"
+      },
+      "id": "FilterMessages",
+      "name": "Filter Messages",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "tenant_settings",
+        "filters": {
+          "conditions": [
+            {
+              "condition": "eq",
+              "keyName": "setting_value",
+              "keyValue": "={{ $json.instanceName }}"
+            },
+            {
+              "condition": "eq",
+              "keyName": "setting_key",
+              "keyValue": "evolution_instance"
+            }
+          ]
+        }
+      },
+      "id": "GetTenantByInstance",
+      "name": "Get Tenant",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        420,
+        300
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "8TEbcDMv4pFPkspM",
+          "name": "HUVIbase"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "if ($input.all().length === 0) return [];\nconst tenant_id = $input.first().json.tenant_id;\nconst prev = $('Filter Messages').first().json;\n\nreturn [{\n  json: {\n    ...prev,\n    tenant_id\n  }\n}];"
+      },
+      "id": "MergeTenant",
+      "name": "Merge Tenant",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        600,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "opportunities",
+        "filters": {
+          "conditions": [
+            {
+              "condition": "eq",
+              "keyName": "tenant_id",
+              "keyValue": "={{ $json.tenant_id }}"
+            },
+            {
+              "condition": "ilike",
+              "keyName": "phone",
+              "keyValue": "=%{{ $json.phone.substring($json.phone.length - 8) }}%"
+            }
+          ]
+        }
+      },
+      "id": "GetOpportunity",
+      "name": "Get Opportunity",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        800,
+        300
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "8TEbcDMv4pFPkspM",
+          "name": "HUVIbase"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "if ($input.all().length === 0) return [];\nconst opp = $input.first().json;\nconst msgData = $('Merge Tenant').first().json;\n\nreturn [{\n  json: {\n    ...msgData,\n    opportunity_id: opp.id,\n    company_name: opp.company_name\n  }\n}];"
+      },
+      "id": "MergeOpportunity",
+      "name": "Merge Opportunity",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1000,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:5678/webhook/huvi-brain",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "prompt",
+              "value": "={{ $json.text }}"
+            },
+            {
+              "name": "system_message",
+              "value": "Você é o SDR do HUVI. Analise a seguinte mensagem do lead e classifique a intenção dele. Retorne APENAS UM JSON no seguinte formato: {\"intent\": \"request_media\"} se o lead estiver pedindo para ver imagem, vídeo, foto, catálogo ou produto. Caso contrário, retorne {\"intent\": \"chat\", \"response\": \"Sua resposta de conversação aqui\"}."
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "HUVIBrain",
+      "name": "HUVI Brain Intention",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        2550,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const responseText = $input.first().json.text || '';\nlet parsed = { intent: 'chat', response: responseText };\ntry {\n  const cleanJson = responseText.replace(/```json/gi, '').replace(/```/g, '').trim();\n  parsed = JSON.parse(cleanJson);\n} catch (e) {}\n\nconst msgData = $('Merge Opportunity').first().json;\n\nreturn [{\n  json: {\n    ...msgData,\n    intent: parsed.intent || 'chat',\n    ai_response: parsed.response || ''\n  }\n}];"
+      },
+      "id": "ParseBrain",
+      "name": "Parse Brain",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2750,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "id": "intent-media",
+                    "leftValue": "={{ $json.intent }}",
+                    "rightValue": "request_media",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "request_media"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "id": "intent-chat",
+                    "leftValue": "={{ $json.intent }}",
+                    "rightValue": "chat",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "chat"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "SwitchIntent",
+      "name": "Switch Intent",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3,
+      "position": [
+        2950,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "offers",
+        "filters": {
+          "conditions": [
+            {
+              "condition": "eq",
+              "keyName": "tenant_id",
+              "keyValue": "={{ $json.tenant_id }}"
+            },
+            {
+              "condition": "eq",
+              "keyName": "active",
+              "keyValue": "true"
+            }
+          ]
+        }
+      },
+      "id": "GetActiveOffer",
+      "name": "Get Active Offer",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        3200,
+        150
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "8TEbcDMv4pFPkspM",
+          "name": "HUVIbase"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "if ($input.all().length === 0) {\n  // Se não tem oferta ativa, mandar pro chat fallback\n  return [];\n}\nconst offer = $input.first().json;\nconst msgData = $('Switch Intent').first().json;\n\nreturn [{\n  json: {\n    ...msgData,\n    offer_name: offer.name,\n    image_url: offer.image_url,\n    video_url: offer.video_url,\n    has_media: !!(offer.image_url || offer.video_url)\n  }\n}];"
+      },
+      "id": "CheckMediaData",
+      "name": "Check Media Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3400,
+        150
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.image_url }}",
+              "operation": "notEmpty"
+            }
+          ]
+        }
+      },
+      "id": "IfHasImage",
+      "name": "If Has Image",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        3600,
+        50
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "messages-api",
+        "operation": "send-media",
+        "instanceName": "={{ $json.instanceName }}",
+        "remoteJid": "={{ $json.remoteJid }}",
+        "mediaType": "image",
+        "mediaUrl": "={{ $json.image_url }}",
+        "options_message": {
+          "caption": "Aqui está a imagem da nossa oferta: *{{ $json.offer_name }}*"
+        }
+      },
+      "id": "SendImageEvolution",
+      "name": "Send Image Evolution",
+      "type": "n8n-nodes-evolution-api.evolutionApi",
+      "typeVersion": 1,
+      "position": [
+        3800,
+        -200
+      ],
+      "credentials": {
+        "evolutionApi": {
+          "id": "IMWdDECSPHovAleD",
+          "name": "HUVI_Evolution_WhatsApp"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.video_url }}",
+              "operation": "notEmpty"
+            }
+          ]
+        }
+      },
+      "id": "IfHasVideo",
+      "name": "If Has Video",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        3800,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "messages-api",
+        "operation": "send-text",
+        "instanceName": "={{ $json.instanceName }}",
+        "remoteJid": "={{ $json.remoteJid }}",
+        "messageText": "Veja também o vídeo sobre a nossa oferta:\n{{ $json.video_url }}",
+        "options_message": {
+          "delay": 2000
+        }
+      },
+      "id": "SendVideoEvolution",
+      "name": "Send Video Evolution",
+      "type": "n8n-nodes-evolution-api.evolutionApi",
+      "typeVersion": 1,
+      "position": [
+        4100,
+        0
+      ],
+      "credentials": {
+        "evolutionApi": {
+          "id": "IMWdDECSPHovAleD",
+          "name": "HUVI_Evolution_WhatsApp"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "messages-api",
+        "operation": "send-text",
+        "instanceName": "={{ $json.instanceName }}",
+        "remoteJid": "={{ $json.remoteJid }}",
+        "messageText": "={{ $json.ai_response }}",
+        "options_message": {}
+      },
+      "id": "SendChatEvolution",
+      "name": "Send Chat Evolution",
+      "type": "n8n-nodes-evolution-api.evolutionApi",
+      "typeVersion": 1,
+      "position": [
+        3100,
+        500
+      ],
+      "credentials": {
+        "evolutionApi": {
+          "id": "IMWdDECSPHovAleD",
+          "name": "HUVI_Evolution_WhatsApp"
+        }
+      }
+    },
+    {
+      "id": "GetActiveConversation",
+      "name": "Get Active Conversation",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1150,
+        300
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "8TEbcDMv4pFPkspM",
+          "name": "HUVIbase"
+        }
+      },
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "conversations",
+        "filters": {
+          "conditions": [
+            {
+              "condition": "eq",
+              "keyName": "opportunity_id",
+              "keyValue": "={{ $json.opportunity_id }}"
+            },
+            {
+              "condition": "in",
+              "keyName": "status",
+              "keyValue": "open,active,waiting"
+            },
+            {
+              "condition": "is",
+              "keyName": "deleted_at",
+              "keyValue": "null"
+            }
+          ]
+        },
+        "limit": 1
+      }
+    },
+    {
+      "id": "CheckConversationExists",
+      "name": "Check Conversation Exists",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 3,
+      "position": [
+        1350,
+        300
+      ],
+      "parameters": {
+        "conditions": {
+          "number": [
+            {
+              "value1": "={{ $json.length }}",
+              "operation": "equal",
+              "value2": 0
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "CreateConversation",
+      "name": "Create Conversation",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1550,
+        420
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "8TEbcDMv4pFPkspM",
+          "name": "HUVIbase"
+        }
+      },
+      "parameters": {
+        "operation": "create",
+        "tableId": "conversations",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "tenant_id",
+              "fieldValue": "={{ $('Merge Opportunity').first().json.tenant_id }}"
+            },
+            {
+              "fieldId": "opportunity_id",
+              "fieldValue": "={{ $('Merge Opportunity').first().json.opportunity_id }}"
+            },
+            {
+              "fieldId": "channel",
+              "fieldValue": "whatsapp"
+            },
+            {
+              "fieldId": "status",
+              "fieldValue": "open"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "SetConversationId",
+      "name": "Set Conversation Id",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1550,
+        180
+      ],
+      "parameters": {
+        "jsCode": "const conv = $input.first()?.json || {};\nconst msgData = $('Merge Opportunity').first().json;\nreturn [{\n  json: {\n    ...msgData,\n    conversation_id: conv.id\n  }\n}];"
+      }
+    },
+    {
+      "id": "SetCreatedConversationId",
+      "name": "Set Created Conversation Id",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1750,
+        420
+      ],
+      "parameters": {
+        "jsCode": "const conv = $input.first()?.json || {};\nconst msgData = $('Merge Opportunity').first().json;\nreturn [{\n  json: {\n    ...msgData,\n    conversation_id: conv.id\n  }\n}];"
+      }
+    },
+    {
+      "id": "MergeConversationState",
+      "name": "Merge Conversation State",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1950,
+        300
+      ],
+      "parameters": {
+        "jsCode": "const items = $input.all().map(e => e.json);\nreturn [{\n  json: items[0]\n}];"
+      }
+    },
+    {
+      "id": "InsertLeadMessage",
+      "name": "Insert Lead Message",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        2150,
+        300
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "8TEbcDMv4pFPkspM",
+          "name": "HUVIbase"
+        }
+      },
+      "parameters": {
+        "operation": "create",
+        "tableId": "messages",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "tenant_id",
+              "fieldValue": "={{ $json.tenant_id }}"
+            },
+            {
+              "fieldId": "conversation_id",
+              "fieldValue": "={{ $json.conversation_id }}"
+            },
+            {
+              "fieldId": "sender",
+              "fieldValue": "lead"
+            },
+            {
+              "fieldId": "content",
+              "fieldValue": "={{ $json.text }}"
+            },
+            {
+              "fieldId": "message_type",
+              "fieldValue": "text"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "UpdateOppStatusConversation",
+      "name": "Update Opp Status",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        2350,
+        300
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "8TEbcDMv4pFPkspM",
+          "name": "HUVIbase"
+        }
+      },
+      "parameters": {
+        "operation": "update",
+        "tableId": "opportunities",
+        "filters": {
+          "conditions": [
+            {
+              "condition": "eq",
+              "keyName": "id",
+              "keyValue": "={{ $('Merge Conversation State').first().json.opportunity_id }}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "status",
+              "fieldValue": "in_conversation"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "SplitAfterUpdate",
+      "name": "Split for Campaign Update",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2450, 300],
+      "parameters": {
+        "jsCode": "const item = $input.first().json;\nreturn [\n  [{ json: item }],\n  [{ json: item }]\n];"
+      }
+    },
+    {
+      "id": "GetCampaign",
+      "name": "Get Campaign",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [2450, 480],
+      "alwaysOutputData": true,
+      "credentials": {
+        "supabaseApi": {
+          "id": "8TEbcDMv4pFPkspM",
+          "name": "HUVIbase"
+        }
+      },
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "campaigns",
+        "limit": 1,
+        "filters": {
+          "conditions": [
+            { "condition": "eq", "keyName": "opportunity_id", "keyValue": "={{ $json.opportunity_id }}" },
+            { "condition": "in", "keyName": "status", "keyValue": "approved,sent,sending" },
+            { "condition": "is", "keyName": "deleted_at", "keyValue": "null" }
+          ]
+        }
+      }
+    },
+    {
+      "id": "SetCampaignReplied",
+      "name": "Set Campaign Replied",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [2650, 480],
+      "credentials": {
+        "supabaseApi": {
+          "id": "8TEbcDMv4pFPkspM",
+          "name": "HUVIbase"
+        }
+      },
+      "parameters": {
+        "operation": "update",
+        "tableId": "campaigns",
+        "filters": {
+          "conditions": [
+            { "condition": "eq", "keyName": "id", "keyValue": "={{ $json.id }}" }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            { "fieldId": "status", "fieldValue": "replied" }
+          ]
+        }
+      }
+    },
+    {
+      "id": "InsertAgentChatMessage",
+      "name": "Insert Agent Chat Message",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        3300,
+        500
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "8TEbcDMv4pFPkspM",
+          "name": "HUVIbase"
+        }
+      },
+      "parameters": {
+        "operation": "create",
+        "tableId": "messages",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "tenant_id",
+              "fieldValue": "={{ $('Merge Conversation State').first().json.tenant_id }}"
+            },
+            {
+              "fieldId": "conversation_id",
+              "fieldValue": "={{ $('Merge Conversation State').first().json.conversation_id }}"
+            },
+            {
+              "fieldId": "sender",
+              "fieldValue": "agent"
+            },
+            {
+              "fieldId": "content",
+              "fieldValue": "={{ $('Parse Brain').first().json.ai_response }}"
+            },
+            {
+              "fieldId": "message_type",
+              "fieldValue": "text"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "InsertAgentImageMessage",
+      "name": "Insert Agent Image Message",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        3800,
+        -50
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "8TEbcDMv4pFPkspM",
+          "name": "HUVIbase"
+        }
+      },
+      "parameters": {
+        "operation": "create",
+        "tableId": "messages",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "tenant_id",
+              "fieldValue": "={{ $('Merge Conversation State').first().json.tenant_id }}"
+            },
+            {
+              "fieldId": "conversation_id",
+              "fieldValue": "={{ $('Merge Conversation State').first().json.conversation_id }}"
+            },
+            {
+              "fieldId": "sender",
+              "fieldValue": "agent"
+            },
+            {
+              "fieldId": "content",
+              "fieldValue": "Aqui está a imagem da nossa oferta: *{{ $('Check Media Data').first().json.offer_name }}*"
+            },
+            {
+              "fieldId": "message_type",
+              "fieldValue": "image"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "InsertAgentVideoMessage",
+      "name": "Insert Agent Video Message",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        4100,
+        150
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "8TEbcDMv4pFPkspM",
+          "name": "HUVIbase"
+        }
+      },
+      "parameters": {
+        "operation": "create",
+        "tableId": "messages",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "tenant_id",
+              "fieldValue": "={{ $('Merge Conversation State').first().json.tenant_id }}"
+            },
+            {
+              "fieldId": "conversation_id",
+              "fieldValue": "={{ $('Merge Conversation State').first().json.conversation_id }}"
+            },
+            {
+              "fieldId": "sender",
+              "fieldValue": "agent"
+            },
+            {
+              "fieldId": "content",
+              "fieldValue": "Veja também o vídeo sobre a nossa oferta:\n{{ $('Check Media Data').first().json.video_url }}"
+            },
+            {
+              "fieldId": "message_type",
+              "fieldValue": "video"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Filter Messages",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Messages": {
+      "main": [
+        [
+          {
+            "node": "Get Tenant",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Tenant": {
+      "main": [
+        [
+          {
+            "node": "Merge Tenant",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge Tenant": {
+      "main": [
+        [
+          {
+            "node": "Get Opportunity",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Opportunity": {
+      "main": [
+        [
+          {
+            "node": "Merge Opportunity",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HUVI Brain Intention": {
+      "main": [
+        [
+          {
+            "node": "Parse Brain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Brain": {
+      "main": [
+        [
+          {
+            "node": "Switch Intent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch Intent": {
+      "main": [
+        [
+          {
+            "node": "Get Active Offer",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Chat Evolution",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Active Offer": {
+      "main": [
+        [
+          {
+            "node": "Check Media Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Media Data": {
+      "main": [
+        [
+          {
+            "node": "If Has Image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If Has Image": {
+      "main": [
+        [
+          {
+            "node": "Send Image Evolution",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "If Has Video",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Image Evolution": {
+      "main": [
+        [
+          {
+            "node": "Insert Agent Image Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If Has Video": {
+      "main": [
+        [
+          {
+            "node": "Send Video Evolution",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge Opportunity": {
+      "main": [
+        [
+          {
+            "node": "Get Active Conversation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Active Conversation": {
+      "main": [
+        [
+          {
+            "node": "Check Conversation Exists",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Conversation Exists": {
+      "main": [
+        [
+          {
+            "node": "Create Conversation",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Set Conversation Id",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Conversation": {
+      "main": [
+        [
+          {
+            "node": "Set Created Conversation Id",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Conversation Id": {
+      "main": [
+        [
+          {
+            "node": "Merge Conversation State",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Created Conversation Id": {
+      "main": [
+        [
+          {
+            "node": "Merge Conversation State",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge Conversation State": {
+      "main": [
+        [
+          {
+            "node": "Insert Lead Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert Lead Message": {
+      "main": [
+        [
+          {
+            "node": "Update Opp Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Opp Status": {
+      "main": [
+        [
+          {
+            "node": "Split for Campaign Update",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split for Campaign Update": {
+      "main": [
+        [
+          {
+            "node": "HUVI Brain Intention",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Get Campaign",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Campaign": {
+      "main": [
+        [
+          {
+            "node": "Set Campaign Replied",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Chat Evolution": {
+      "main": [
+        [
+          {
+            "node": "Insert Agent Chat Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Video Evolution": {
+      "main": [
+        [
+          {
+            "node": "Insert Agent Video Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

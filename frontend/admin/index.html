@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="HUVI — Console Superadmin. Painel de gestão de tenants, financeiro e operações.">
+  <meta name="robots" content="noindex, nofollow">
+  <title>HUVI — Console Superadmin</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Estilos -->
+  <link rel="stylesheet" href="/admin/css/admin.css?v=1">
+</head>
+<body>
+
+  <!-- ============================== -->
+  <!-- TELA DE LOGIN -->
+  <!-- ============================== -->
+  <div id="admin-auth-screen" class="screen auth-screen active">
+    <div class="auth-container">
+      <div class="auth-brand">
+        <div class="auth-logo">
+          <span class="logo-icon">⚡</span>
+          <h1 class="logo-text">HUVI</h1>
+        </div>
+        <p class="auth-tagline">Hub de Vendas Inteligente</p>
+        <span class="auth-badge">Console Superadmin</span>
+      </div>
+
+      <form id="admin-login-form" class="auth-form" novalidate>
+        <h2 class="auth-title">Acesso Restrito</h2>
+        <p class="auth-subtitle">Informe suas credenciais de administrador</p>
+
+        <div class="form-group">
+          <label for="admin-login-user" class="form-label">Usuário</label>
+          <input type="text" id="admin-login-user" class="form-input" placeholder="superadmin" required autocomplete="username">
+        </div>
+
+        <div class="form-group">
+          <label for="admin-login-pass" class="form-label">Senha</label>
+          <input type="password" id="admin-login-pass" class="form-input" placeholder="••••••••" required autocomplete="current-password">
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-full">Entrar no Console</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============================== -->
+  <!-- APP PRINCIPAL -->
+  <!-- ============================== -->
+  <div id="admin-app-screen" class="screen app-screen">
+
+    <!-- Sidebar -->
+    <aside id="admin-sidebar" class="sidebar">
+      <div class="sidebar-brand">
+        <span class="sidebar-brand-icon">⚡</span>
+        <span class="sidebar-brand-text">HUVI</span>
+        <span class="sidebar-brand-badge">Admin</span>
+      </div>
+
+      <nav class="sidebar-nav">
+        <a href="#" class="nav-item active" data-page="tenants" id="nav-tenants">
+          <span class="nav-icon">🏢</span>
+          <span>Clientes Contratantes</span>
+        </a>
+        <a href="#" class="nav-item" data-page="financial" id="nav-financial">
+          <span class="nav-icon">💰</span>
+          <span>Controle Financeiro</span>
+        </a>
+        <a href="#" class="nav-item" data-page="logs" id="nav-logs">
+          <span class="nav-icon">📋</span>
+          <span>Logs Operacionais</span>
+        </a>
+        <a href="#" class="nav-item" data-page="connections" id="nav-connections">
+          <span class="nav-icon">🔌</span>
+          <span>Diagnóstico de Conexões</span>
+        </a>
+        <a href="#" class="nav-item" data-page="security" id="nav-security">
+          <span class="nav-icon">🔒</span>
+          <span>Segurança</span>
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <button id="admin-logout-btn" class="nav-item nav-logout">
+          <span class="nav-icon">🚪</span>
+          <span>Sair</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+
+      <!-- Header -->
+      <header class="main-header">
+        <button id="admin-menu-toggle" class="menu-toggle" aria-label="Menu">
+          <span></span><span></span><span></span>
+        </button>
+        <h2 id="admin-page-title" class="page-title">Clientes Contratantes</h2>
+        <div class="header-actions">
+          <div class="user-badge">
+            <span>🛡️</span>
+            <span id="admin-user-label">superadmin</span>
+          </div>
+        </div>
+      </header>
+
+      <!-- Pages Container -->
+      <div class="pages-container">
+
+        <!-- ========== PAGE: TENANTS ========== -->
+        <section id="page-tenants" class="page active">
+          <div class="page-header">
+            <div class="section-header">
+              <h3 class="section-title">⚡ Clientes Contratantes (Tenants)</h3>
+              <p class="section-subtitle">Cadastro e gerenciamento isolado de multi-empresas.</p>
+            </div>
+            <button id="btn-new-tenant" class="btn btn-primary">
+              <span>+ Inserir Novo Cliente</span>
+            </button>
+          </div>
+
+          <!-- Search & Filters -->
+          <div class="search-bar">
+            <div class="search-input-wrapper">
+              <span class="search-icon">🔍</span>
+              <input type="text" id="tenants-search" class="search-input" placeholder="Buscar empresa, responsável ou slug...">
+            </div>
+            <select id="filter-niche" class="filter-btn">
+              <option value="">Todos os Nichos</option>
+              <option value="Barbearia">Barbearia</option>
+              <option value="Clínica">Clínica</option>
+              <option value="Personal">Personal</option>
+              <option value="Consultoria">Consultoria</option>
+              <option value="E-commerce">E-commerce</option>
+              <option value="Restaurante">Restaurante</option>
+              <option value="Imobiliária">Imobiliária</option>
+              <option value="Outro">Outro</option>
+            </select>
+            <select id="filter-status-tenant" class="filter-btn">
+              <option value="">Todos os Status</option>
+              <option value="active">Ativo</option>
+              <option value="suspended">Suspenso</option>
+              <option value="inactive">Inativo</option>
+            </select>
+          </div>
+
+          <!-- Table -->
+          <div class="section-card">
+            <div class="data-table-wrapper">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Empresa / Nicho</th>
+                    <th>Link Rota</th>
+                    <th>Proprietário</th>
+                    <th>Contato</th>
+                    <th>Status</th>
+                    <th>Financeiro</th>
+                    <th>Ações Operacionais</th>
+                  </tr>
+                </thead>
+                <tbody id="tenants-table-body">
+                  <tr>
+                    <td colspan="8" style="text-align:center; padding:40px; color:var(--text-muted);">Carregando...</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Modal Tenant -->
+          <div id="modal-tenant" class="modal hidden">
+            <div class="modal-overlay"></div>
+            <div class="modal-content">
+              <div class="modal-header">
+                <h3 id="modal-tenant-title">⚡ Adicionar Cliente Contratante</h3>
+                <button class="modal-close" id="close-tenant-modal">&times;</button>
+              </div>
+              <form id="tenant-form" class="modal-body" novalidate>
+                <input type="hidden" id="tenant-edit-id" value="">
+
+                <div class="form-group">
+                  <label class="form-label" for="tenant-name">Nome da Empresa</label>
+                  <input type="text" id="tenant-name" class="form-input" placeholder="Ex: Barbearia Nexus Premium" required>
+                </div>
+
+                <div class="form-row">
+                  <div class="form-group">
+                    <label class="form-label" for="tenant-slug">Slug Rota URL</label>
+                    <input type="text" id="tenant-slug" class="form-input" placeholder="ex: barbearia-nexus">
+                    <span class="form-help">Será usado na URL da rota</span>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" for="tenant-niche">Nicho de Atuação</label>
+                    <input type="text" id="tenant-niche" class="form-input" placeholder="Ex: Barbearia, Clínica, Personal">
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label" for="tenant-owner">Nome do Dono / Responsável</label>
+                  <input type="text" id="tenant-owner" class="form-input" placeholder="Ex: Carlos Augusto Martins">
+                </div>
+
+                <div class="form-row">
+                  <div class="form-group">
+                    <label class="form-label" for="tenant-email">E-mail Principal</label>
+                    <input type="email" id="tenant-email" class="form-input" placeholder="dono@empresa.com" required>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" for="tenant-phone">Telefone WhatsApp</label>
+                    <input type="tel" id="tenant-phone" class="form-input" placeholder="(11) 99999-9999">
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label" for="tenant-password">Senha Mestra do Tenant</label>
+                  <input type="password" id="tenant-password" class="form-input" placeholder="Usada pelo administrador do cliente">
+                  <span class="form-help">Usada pelo administrador do cliente</span>
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label" for="tenant-plan">Plano de Assinatura</label>
+                    <select id="tenant-plan" class="form-select">
+                      <option value="free">Plano Gratuito (R$ 0,00 / mês)</option>
+                      <option value="start">Plano Start (R$ 49,90 / mês)</option>
+                      <option value="pro">Plano Pro (R$ 89,90 / mês)</option>
+                    </select>
+                </div>
+
+                <div class="form-row">
+                  <div class="form-group">
+                    <label class="form-label" for="tenant-value">Valor Mensal (R$)</label>
+                    <input type="number" id="tenant-value" class="form-input" value="0" step="0.01" min="0">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" for="tenant-due">Data do Vencimento</label>
+                    <input type="text" id="tenant-due" class="form-input" placeholder="dd/mm/aaaa">
+                  </div>
+                </div>
+
+                <!-- Controle de Créditos de Oportunidades (gemini2.md / gemini3.md v2.1) -->
+                <div style="border-top:1px solid var(--surface-300); margin-top:var(--space-4); padding-top:var(--space-4);">
+                  <h4 style="font-weight:700; margin-bottom:var(--space-3); display:flex; align-items:center; gap:8px; font-size:var(--font-sm);">
+                    🎟️ Créditos do Ciclo (30 dias)
+                  </h4>
+                  <div class="form-row">
+                    <div class="form-group">
+                      <label class="form-label" for="tenant-credit-limit">Limite de Buscas</label>
+                      <input type="number" id="tenant-credit-limit" class="form-input" value="80" min="0" step="1">
+                      <span class="form-help">Máximo de operações de busca por ciclo de 30 dias</span>
+                    </div>
+                    <div class="form-group">
+                      <label class="form-label" for="tenant-credit-used">Consumidos</label>
+                      <input type="number" id="tenant-credit-used" class="form-input" value="0" min="0" step="1" readonly disabled style="background:var(--surface-200);">
+                      <span class="form-help">Somente leitura (atualizado pelo sistema)</span>
+                    </div>
+                  </div>
+                  <div class="form-row">
+                    <div class="form-group">
+                      <label class="form-label" for="tenant-credit-start">Início do Ciclo</label>
+                      <input type="text" id="tenant-credit-start" class="form-input" readonly disabled style="background:var(--surface-200);">
+                    </div>
+                    <div class="form-group">
+                      <label class="form-label" for="tenant-credit-reset">Próximo Reset</label>
+                      <input type="text" id="tenant-credit-reset" class="form-input" readonly disabled style="background:var(--surface-200);">
+                    </div>
+                  </div>
+
+                  <h4 style="font-weight:600; margin:var(--space-4) 0 var(--space-2) 0; font-size:var(--font-xs); color:var(--text-muted);">⚖️ Pesos de Operação</h4>
+                  <div class="form-row">
+                    <div class="form-group">
+                      <label class="form-label" for="tenant-weight-os">Outscraper Search</label>
+                      <input type="number" id="tenant-weight-os" class="form-input" value="1" min="1" max="10" step="1">
+                      <span class="form-help">Créditos por busca Outscraper</span>
+                    </div>
+                    <div class="form-group">
+                      <label class="form-label" for="tenant-weight-fc">Firecrawl Search</label>
+                      <input type="number" id="tenant-weight-fc" class="form-input" value="2" min="1" max="10" step="1">
+                      <span class="form-help">Créditos por busca Firecrawl</span>
+                    </div>
+                  </div>
+                  <div class="form-row">
+                    <div class="form-group">
+                      <label class="form-label" for="tenant-weight-scrape">Firecrawl Scrape (Análise)</label>
+                      <input type="number" id="tenant-weight-scrape" class="form-input" value="1" min="1" max="10" step="1">
+                      <span class="form-help">Créditos por análise individual de site</span>
+                    </div>
+                    <div class="form-group">
+                      <label class="form-label" for="tenant-weight-audit">Firecrawl Auditor Completo</label>
+                      <input type="number" id="tenant-weight-audit" class="form-input" value="3" min="1" max="10" step="1">
+                      <span class="form-help">Créditos por auditoria (search + scrape + extração)</span>
+                    </div>
+                  </div>
+
+                  <div style="display:flex; gap:var(--space-2); flex-wrap:wrap; margin-top:var(--space-3);">
+                    <button type="button" class="btn btn-ghost btn-sm" id="btn-reset-credits" style="font-size:var(--font-xs);">🔄 Resetar Créditos Agora</button>
+                  </div>
+                </div>
+
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-ghost" id="cancel-tenant">Cancelar</button>
+                  <button type="submit" class="btn btn-success">Criar Infraestrutura</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </section>
+
+        <!-- ========== PAGE: FINANCIAL ========== -->
+        <section id="page-financial" class="page">
+          <div class="page-header">
+            <div class="section-header">
+              <h3 class="section-title">💰 Controle Financeiro</h3>
+              <p class="section-subtitle">Gestão de pagamentos, cobranças e custos operacionais do SaaS.</p>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 4px;">
+              <div style="display: flex; gap: var(--space-3); flex-wrap: wrap; align-items: center;">
+                <button id="btn-edit-expenses" class="btn btn-ghost btn-sm" style="height: 38px;">⚙️ Configurar Despesas</button>
+                <div style="display: flex; gap: var(--space-2); align-items: center; border: 1px solid var(--border); padding: 4px; border-radius: var(--radius-sm); background: var(--surface-100);">
+                  <input type="email" id="quick-link-email" placeholder="E-mail" style="border: none; background: transparent; font-size: var(--font-xs); width: 140px; outline: none; padding: 4px;">
+                  <div style="width: 1px; height: 16px; background: var(--border);"></div>
+                  <input type="tel" id="quick-link-whatsapp" placeholder="WhatsApp (55...)" style="border: none; background: transparent; font-size: var(--font-xs); width: 140px; outline: none; padding: 4px;">
+                </div>
+                <div class="plan-links" style="display: flex; gap: var(--space-2);">
+                  <button type="button" id="btn-send-start" class="plan-link start" style="padding: 6px 12px; font-size: var(--font-xs); border-radius: var(--radius-sm); border: none; cursor: pointer;">Start</button>
+                  <button type="button" id="btn-send-pro" class="plan-link pro" style="padding: 6px 12px; font-size: var(--font-xs); border-radius: var(--radius-sm); border: none; cursor: pointer;">Pro</button>
+                </div>
+              </div>
+              <div id="quick-link-feedback" style="font-size: 11px; font-weight: 600; min-height: 16px; padding-left: 170px;"></div>
+            </div>
+          </div>
+
+          <!-- Grade de Receitas (Estilo Earning - fundo escuro) -->
+          <div style="margin-bottom: var(--space-5);">
+            <h4 style="font-weight: 700; color: var(--text-primary); margin-bottom: var(--space-3); display: flex; align-items: center; gap: 8px; font-size: var(--font-md);">
+              📥 Receitas e Contratos
+            </h4>
+            <div class="kpi-grid">
+              <!-- Card Destaque: Receita Total (Estilo Earning - fundo escuro) -->
+              <div class="kpi-card highlight-card" style="background: linear-gradient(135deg, #c45500 0%, #e06000 50%, #f47001 100%); color: #ffffff; border: none; flex-direction: column; align-items: flex-start; justify-content: space-between; min-height: 140px; box-shadow: var(--shadow-md);">
+                <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
+                  <span style="font-size: var(--font-xs); text-transform: uppercase; font-weight: 700; color: #ffffff; letter-spacing: 1px;">Faturamento Total</span>
+                  <span style="font-size: 1.3rem;">💰</span>
+                </div>
+                <div style="margin-top: auto; width: 100%;">
+                  <h2 style="font-size: 2rem; font-weight: 800; line-height: 1.1; color: #ffffff;" id="fin-total-receber">R$ 0,00</h2>
+                  <span style="font-size: var(--font-xs); color: #ffffff; opacity: 0.85;" id="fin-active-tenants-desc">0 contratos ativos</span>
+                </div>
+              </div>
+
+              <!-- Card Em Dia (Branco) -->
+              <div class="kpi-card" style="min-height: 140px; flex-direction: column; align-items: flex-start; justify-content: space-between;">
+                <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
+                  <span class="kpi-label" style="font-size: var(--font-xs); font-weight: 600; margin: 0; color: var(--text-muted);">Contratos em Dia</span>
+                  <span class="kpi-icon success" style="width: 32px; height: 32px; font-size: 0.9rem; margin: 0; background: var(--success-light);">✅</span>
+                </div>
+                <div>
+                  <h2 class="kpi-value" id="fin-em-dia" style="font-size: 1.8rem; font-weight: 700;">0</h2>
+                  <span class="kpi-tag success" style="margin-top: 4px;" id="fin-em-dia-value">R$ 0,00</span>
+                </div>
+              </div>
+
+              <!-- Card Em Atraso (Branco) -->
+              <div class="kpi-card" style="min-height: 140px; flex-direction: column; align-items: flex-start; justify-content: space-between;">
+                <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
+                  <span class="kpi-label" style="font-size: var(--font-xs); font-weight: 600; margin: 0; color: var(--text-muted);">Contratos em Atraso</span>
+                  <span class="kpi-icon warning" style="width: 32px; height: 32px; font-size: 0.9rem; margin: 0; background: var(--warning-light);">⚠️</span>
+                </div>
+                <div>
+                  <h2 class="kpi-value" id="fin-em-atraso" style="font-size: 1.8rem; font-weight: 700;">0</h2>
+                  <span class="kpi-tag warning" style="margin-top: 4px;" id="fin-em-atraso-value">R$ 0,00</span>
+                </div>
+              </div>
+
+              <!-- Card Total Cadastrados (Branco) -->
+              <div class="kpi-card" style="min-height: 140px; flex-direction: column; align-items: flex-start; justify-content: space-between;">
+                <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
+                  <span class="kpi-label" style="font-size: var(--font-xs); font-weight: 600; margin: 0; color: var(--text-muted);">Total Cadastrados</span>
+                  <span class="kpi-icon info" style="width: 32px; height: 32px; font-size: 0.9rem; margin: 0; background: var(--info-light);">👥</span>
+                </div>
+                <div>
+                  <h2 class="kpi-value" id="fin-total" style="font-size: 1.8rem; font-weight: 700;">0</h2>
+                  <span class="kpi-tag info" style="margin-top: 4px;">SaaS escalável</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Grade de Despesas Operacionais (Métricas LLM e Outras) -->
+          <div style="margin-bottom: var(--space-6);">
+            <h4 style="font-weight: 700; color: var(--text-primary); margin-bottom: var(--space-3); display: flex; align-items: center; gap: 8px; font-size: var(--font-md);">
+              💸 Despesas e Custos
+            </h4>
+            <div class="kpi-grid">
+              <!-- Card Destaque Despesas: Total Despesas (Fundo Escuro Terroso) -->
+              <div class="kpi-card highlight-card-danger" style="background: linear-gradient(135deg, var(--text-secondary), var(--text-primary)); color: var(--text-inverse); border: none; flex-direction: column; align-items: flex-start; justify-content: space-between; min-height: 140px; box-shadow: var(--shadow-md);">
+                <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
+                  <span style="font-size: var(--font-xs); text-transform: uppercase; font-weight: 700; opacity: 0.9; letter-spacing: 1px;">Total Despesas</span>
+                  <span style="font-size: 1.3rem;">📉</span>
+                </div>
+                <div style="margin-top: auto; width: 100%;">
+                  <h2 style="font-size: 2rem; font-weight: 800; line-height: 1.1; color: var(--text-inverse);" id="fin-total-despesas">R$ 0,00</h2>
+                  <span style="font-size: var(--font-xs); opacity: 0.9; font-weight: 600;" id="fin-profit-desc">Resultado líquido...</span>
+                </div>
+              </div>
+
+              <!-- Card LLM para Workflow (Branco) -->
+              <div class="kpi-card" style="min-height: 140px; flex-direction: column; align-items: flex-start; justify-content: space-between;">
+                <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
+                  <span class="kpi-label" style="font-size: var(--font-xs); font-weight: 600; margin: 0; color: var(--text-muted);">LLM para Workflow</span>
+                  <span class="kpi-icon primary" style="width: 32px; height: 32px; font-size: 0.9rem; margin: 0; background: rgba(244, 112, 1, 0.1);">⚙️</span>
+                </div>
+                <div>
+                  <h2 class="kpi-value" id="fin-llm-workflow" style="font-size: 1.6rem; font-weight: 700;">R$ 0,00</h2>
+                  <span class="kpi-tag primary" style="margin-top: 4px;">Execuções n8n</span>
+                </div>
+              </div>
+
+              <!-- Card LLM da Plataforma (Branco) -->
+              <div class="kpi-card" style="min-height: 140px; flex-direction: column; align-items: flex-start; justify-content: space-between;">
+                <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
+                  <span class="kpi-label" style="font-size: var(--font-xs); font-weight: 600; margin: 0; color: var(--text-muted);">LLM da Plataforma</span>
+                  <span class="kpi-icon primary" style="width: 32px; height: 32px; font-size: 0.9rem; margin: 0; background: rgba(244, 112, 1, 0.1);">🧠</span>
+                </div>
+                <div>
+                  <h2 class="kpi-value" id="fin-llm-plataforma" style="font-size: 1.6rem; font-weight: 700;">R$ 0,00</h2>
+                  <span class="kpi-tag primary" style="margin-top: 4px;">Auditoria e Strategist</span>
+                </div>
+              </div>
+
+              <!-- Card Outras Despesas Operacionais (Branco) -->
+              <div class="kpi-card" style="min-height: 140px; flex-direction: column; align-items: flex-start; justify-content: space-between;">
+                <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
+                  <span class="kpi-label" style="font-size: var(--font-xs); font-weight: 600; margin: 0; color: var(--text-muted);">Outras Despesas</span>
+                  <span class="kpi-icon info" style="width: 32px; height: 32px; font-size: 0.9rem; margin: 0; background: var(--info-light);">🌐</span>
+                </div>
+                <div>
+                  <h2 class="kpi-value" id="fin-outras-despesas" style="font-size: 1.6rem; font-weight: 700;">R$ 0,00</h2>
+                  <span class="kpi-tag info" style="margin-top: 4px;">Infra e Integrações</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Seção de detalhamento dos valores recebidos por cada tenant -->
+          <div class="section-card" style="padding: var(--space-5);">
+            <div class="section-card-header" style="margin-bottom: var(--space-4);">
+              <div>
+                <h4 class="section-card-title" style="font-size: var(--font-md); font-weight: 700;">🏢 Valores Recebidos por Cliente (Tenant)</h4>
+                <p class="section-card-subtitle">Visão analítica de mensalidades e planos contratados.</p>
+              </div>
+            </div>
+            <div class="data-table-wrapper">
+              <table class="data-table">
+                <thead>
+                  <tr style="border-bottom: 2px solid var(--surface-300);">
+                    <th>Empresa</th>
+                    <th>Plano</th>
+                    <th>Valor Mensal</th>
+                    <th>Vencimento</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody id="financial-tenants-list">
+                  <tr>
+                    <td colspan="5" style="text-align: center; padding: var(--space-6); color: var(--text-muted);">
+                      Carregando detalhamento...
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Modal para Configurar Despesas -->
+          <div id="modal-expenses" class="modal hidden">
+            <div class="modal-overlay"></div>
+            <div class="modal-content" style="max-width: 400px;">
+              <div class="modal-header" style="padding: var(--space-4) var(--space-5);">
+                <h3 style="font-size: var(--font-md); font-weight: 700; display: flex; align-items: center; gap: 8px;">⚙️ Configurar Despesas</h3>
+                <button type="button" class="modal-close" id="close-expenses-modal">&times;</button>
+              </div>
+              <form id="expenses-form" class="modal-body" style="padding: var(--space-5);" novalidate>
+                <div class="form-group" style="margin-bottom: var(--space-4);">
+                  <label class="form-label" for="expense-llm-workflow">Custo LLM para Workflow (R$)</label>
+                  <input type="number" id="expense-llm-workflow" class="form-input" value="0.00" step="0.01" min="0" required>
+                </div>
+                <div class="form-group" style="margin-bottom: var(--space-4);">
+                  <label class="form-label" for="expense-llm-platform">Custo LLM da Plataforma (R$)</label>
+                  <input type="number" id="expense-llm-platform" class="form-input" value="0.00" step="0.01" min="0" required>
+                </div>
+                <div class="form-group" style="margin-bottom: var(--space-5);">
+                  <label class="form-label" for="expense-other-operational">Outras Despesas Operacionais (R$)</label>
+                  <input type="number" id="expense-other-operational" class="form-input" value="0.00" step="0.01" min="0" required>
+                </div>
+                <div class="modal-footer" style="padding: var(--space-3) 0 0 0; border: none;">
+                  <button type="button" class="btn btn-ghost" id="cancel-expenses">Cancelar</button>
+                  <button type="submit" class="btn btn-primary">Salvar Custos</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </section>
+
+        <!-- ========== PAGE: LOGS ========== -->
+        <section id="page-logs" class="page">
+          <div class="page-header">
+            <div class="section-header">
+              <h3 class="section-title">📋 Logs Operacionais (Terminal Inteligente)</h3>
+              <p class="section-subtitle">Transações com sinalização automática de erros e sugestões de correção.</p>
+            </div>
+          </div>
+
+          <div class="section-card">
+            <div class="terminal">
+              <div class="terminal-header">
+                <span class="terminal-title">Terminal Active — Smart Log Analysis</span>
+                <span class="terminal-rls">RLS SAFE</span>
+              </div>
+              <div id="terminal-body">
+                <div style="padding:20px; text-align:center; color:var(--text-muted);">Carregando logs...</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ========== PAGE: CONNECTIONS ========== -->
+        <section id="page-connections" class="page">
+          <div class="page-header">
+            <div class="section-header">
+              <h3 class="section-title">🔌 Diagnóstico de Conexões</h3>
+              <p class="section-subtitle">Canais ativos por cliente contratante.</p>
+            </div>
+          </div>
+
+          <div id="connections-grid" class="connections-grid">
+            <div style="padding:40px; text-align:center; color:var(--text-muted);">Carregando conexões...</div>
+          </div>
+        </section>
+
+        <!-- ========== PAGE: SECURITY ========== -->
+        <section id="page-security" class="page">
+          <div class="page-header">
+            <div class="section-header">
+              <h3 class="section-title">🔒 Segurança do Console</h3>
+              <p class="section-subtitle">Altere o nome de usuário e a senha do Superadmin.</p>
+            </div>
+          </div>
+
+          <div class="security-card">
+            <div class="security-info">
+              <span class="security-title">🔐 Segurança do Console</span>
+              <span class="security-subtitle">Altere o nome de usuário e a senha do Superadmin.</span>
+            </div>
+            <button id="btn-security-config" class="btn btn-primary">⚙️ Configurar</button>
+          </div>
+
+          <!-- Modal Security -->
+          <div id="modal-security" class="modal hidden">
+            <div class="modal-overlay"></div>
+            <div class="modal-content" style="max-width:420px;">
+              <div class="modal-header">
+                <h3>🔐 Alterar Credenciais</h3>
+                <button class="modal-close" id="close-security-modal">&times;</button>
+              </div>
+              <form id="security-form" class="modal-body" novalidate>
+                <div class="form-group">
+                  <label class="form-label" for="security-username">Nome de Usuário</label>
+                  <input type="text" id="security-username" class="form-input" placeholder="superadmin" required>
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="security-password">Nova Senha</label>
+                  <input type="password" id="security-password" class="form-input" placeholder="••••••••">
+                  <span class="form-help">Deixe em branco para manter a senha atual</span>
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="security-password-confirm">Confirmar Nova Senha</label>
+                  <input type="password" id="security-password-confirm" class="form-input" placeholder="••••••••">
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-ghost" id="cancel-security">Cancelar</button>
+                  <button type="submit" class="btn btn-primary">Salvar</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </section>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- Toast -->
+  <div id="admin-toast" class="toast hidden"></div>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/admin/js/admin-config.js?v=2"></script>
+  <script src="/admin/js/admin-client.js?v=2"></script>
+  <script src="/admin/js/admin-auth.js?v=2"></script>
+  <script src="/admin/js/admin-router.js?v=2"></script>
+  <script src="/admin/js/admin-tenants.js?v=2"></script>
+  <script src="/admin/js/admin-financial.js?v=2"></script>
+  <script src="/admin/js/admin-logs.js?v=2"></script>
+  <script src="/admin/js/admin-connections.js?v=2"></script>
+  <script src="/admin/js/admin-security.js?v=2"></script>
+  <script src="/admin/js/admin-app.js?v=2"></script>
+</body>
+</html>

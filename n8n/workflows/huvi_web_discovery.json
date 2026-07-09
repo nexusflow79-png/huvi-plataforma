@@ -1,0 +1,381 @@
+{
+  "name": "HUVI - Descoberta Web (Firecrawl)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "huvi-web-discovery",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [0, 200],
+      "webhookId": "huvi-web-discovery"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "table": "tenant_credits",
+        "limit": 1,
+        "matchType": "allColumns",
+        "matchColumns": "tenant_id",
+        "matchValue": "={{$json.body.tenantId}}"
+      },
+      "name": "Supabase - Get Credits",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [220, 200],
+      "alwaysOutputData": true,
+      "continueOnFail": true,
+      "credentials": {
+        "supabaseApi": {
+          "id": "8TEbcDMv4pFPkspM",
+          "name": "HUVIbase"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "number": [
+            {
+              "value1": "={{ ($json.opportunity_used !== undefined && $json.opportunity_used !== null) ? $json.opportunity_used : 0 }}",
+              "operation": "smaller",
+              "value2": "={{ ($json.opportunity_limit !== undefined && $json.opportunity_limit !== null) ? $json.opportunity_limit : 80 }}"
+            }
+          ]
+        }
+      },
+      "name": "IF - Credits Available",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [440, 200]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\n  \"success\": false,\n  \"message\": \"Limite de créditos do ciclo atingido para o tenant.\"\n}",
+        "options": {}
+      },
+      "name": "Respond Webhook - No Credits",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [660, 400]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{$env.FIRECRAWL_API_URL || 'https://api.firecrawl.dev/v1'}}/search",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "query",
+              "value": "={{ $('Webhook').first().json.body.keywords.join(' ') }}"
+            },
+            {
+              "name": "limit",
+              "value": "30"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.FIRECRAWL_API_KEY}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "name": "Firecrawl Search API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [880, 0],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Validar resposta e extrair dados\nconst input = $input.first().json;\n\nif (input.error || !input.data) {\n  const errorMsg = input.error?.message || input.message || 'Erro ao chamar Firecrawl Search API';\n  return [{ json: { apiError: true, errorMessage: errorMsg } }];\n}\n\nconst results = input.data;\n\nif (!results || !Array.isArray(results) || results.length === 0) {\n  return [{ json: { apiError: false, noResults: true, results: [] } }];\n}\n\n// Mapear resultados para formato HUVI\nconst leads = results.map(item => ({\n  title: item.title || item.metadata?.title || '',\n  url: item.url || '',\n  description: item.description || item.metadata?.description || '',\n  phone: null, // Será populado via scrape adicional\n  email: null\n}));\n\nreturn [{ json: { apiError: false, noResults: false, leads } }];"
+      },
+      "name": "Extrair Resultados",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1100, 0]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json.apiError }}",
+              "value2": false
+            }
+          ]
+        }
+      },
+      "name": "IF - API Success",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [1320, 0]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"success\": false,\n  \"message\": \"{{ $json.errorMessage || 'Erro na busca Firecrawl' }}\"\n}",
+        "options": {}
+      },
+      "name": "Respond Webhook - API Error",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1540, 200]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json.noResults }}",
+              "value2": false
+            }
+          ]
+        }
+      },
+      "name": "IF - Has Results",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [1540, -100]
+    },
+    {
+      "parameters": {
+        "jsCode": "const tenantId = $('Webhook').first().json.body.tenantId;\n\nreturn [{ json: { summary: { found: 0, created: 0, duplicates: 0 }, tenantId } }];"
+      },
+      "name": "Empty Summary",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1760, 200]
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "table": "opportunities",
+        "limit": 1000,
+        "matchType": "allColumns",
+        "matchColumns": "tenant_id",
+        "matchValue": "={{$('Webhook').first().json.body.tenantId}}"
+      },
+      "name": "Supabase - Get Existing Opps",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [1760, -300],
+      "alwaysOutputData": true,
+      "continueOnFail": true,
+      "credentials": {
+        "supabaseApi": {
+          "id": "8TEbcDMv4pFPkspM",
+          "name": "HUVIbase"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const tenantId = $('Webhook').first().json.body.tenantId;\nconst keywords = $('Webhook').first().json.body.keywords || [];\nconst leads = $('Extrair Resultados').first().json.leads;\nconst existingOpps = $input.all().map(e => e.json).filter(e => e && !e.error);\n\nlet validLeads = [];\nlet duplicates = 0;\n\nleads.forEach(lead => {\n  if (!lead.title && !lead.url) return;\n\n  const isDup = existingOpps.some(e =>\n    (e.website && lead.url && e.website === lead.url) ||\n    (e.phone && lead.phone && e.phone === lead.phone) ||\n    (e.email && lead.email && e.email === lead.email)\n  );\n\n  if (isDup) {\n    duplicates++;\n  } else {\n    let score = 0;\n    if (lead.phone) score += 15;\n    if (lead.url) score += 20;\n    if (lead.email) score += 15;\n    if (lead.description && lead.description.length > 100) score += 10;\n    if (lead.title && lead.title.length > 3) score += 10;\n\n    validLeads.push({\n      tenant_id: tenantId,\n      company_name: lead.title,\n      website: lead.url || null,\n      email: lead.email || null,\n      phone: lead.phone || null,\n      description: lead.description || null,\n      origin: 'Web Discovery',\n      source_service: 'Firecrawl',\n      status: score >= 60 ? 'scored' : 'discovered',\n      score: score\n    });\n  }\n});\n\nif (validLeads.length === 0) {\n  return [{ json: { summary: { found: leads.length, created: 0, duplicates: duplicates }, tenantId } }];\n}\n\nreturn validLeads.map(l => ({ json: { ...l, summary: { found: leads.length, created: validLeads.length, duplicates } } }));"
+      },
+      "name": "Deduplicação e Scoring",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1980, -300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json.company_name ? true : false }}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "name": "IF - Has Leads",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [2200, -300]
+    },
+    {
+      "parameters": {
+        "operation": "insert",
+        "table": "opportunities",
+        "dataMode": "defineBelow",
+        "valuesUi": {
+          "values": [
+            { "name": "tenant_id", "value": "={{ $json.tenant_id }}" },
+            { "name": "company_name", "value": "={{ $json.company_name }}" },
+            { "name": "website", "value": "={{ $json.website }}" },
+            { "name": "email", "value": "={{ $json.email }}" },
+            { "name": "phone", "value": "={{ $json.phone }}" },
+            { "name": "description", "value": "={{ $json.description }}" },
+            { "name": "origin", "value": "={{ $json.origin }}" },
+            { "name": "source_service", "value": "={{ $json.source_service }}" },
+            { "name": "status", "value": "={{ $json.status }}" },
+            { "name": "score", "value": "={{ $json.score }}" }
+          ]
+        }
+      },
+      "name": "Supabase - Create Opps",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [2420, -500],
+      "continueOnFail": true,
+      "credentials": {
+        "supabaseApi": {
+          "id": "8TEbcDMv4pFPkspM",
+          "name": "HUVIbase"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconst summary = items[0]?.json?.summary || { found: 0, created: 0, duplicates: 0 };\nconst tenantId = $('Webhook').first().json.body.tenantId;\n\nconst creditsRow = $('Supabase - Get Credits').first().json;\n\nlet oldUsed = 0;\nlet weight = 2;\ntry {\n  oldUsed = parseInt(creditsRow.opportunity_used) || 0;\n  weight = parseInt(creditsRow.weight_firecrawl_search) || 2;\n} catch (e) {}\n\nconst newUsed = oldUsed + weight;\n\nreturn [{ json: { summary, tenantId, newUsed, weight } }];"
+      },
+      "name": "Prepare Logs",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2640, -300]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "table": "tenant_credits",
+        "matchType": "allColumns",
+        "matchColumns": "tenant_id",
+        "matchValue": "={{ $json.tenantId }}",
+        "dataMode": "defineBelow",
+        "valuesUi": {
+          "values": [
+            { "name": "opportunity_used", "value": "={{ $json.newUsed }}" }
+          ]
+        }
+      },
+      "name": "Supabase - Update Credits",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [2860, -400],
+      "continueOnFail": true,
+      "credentials": {
+        "supabaseApi": {
+          "id": "8TEbcDMv4pFPkspM",
+          "name": "HUVIbase"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "insert",
+        "table": "web_search_log",
+        "dataMode": "defineBelow",
+        "valuesUi": {
+          "values": [
+            { "name": "tenant_id", "value": "={{ $json.tenantId }}" },
+            { "name": "keywords", "value": "={{ $('Webhook').first().json.body.keywords }}" },
+            { "name": "results_count", "value": "={{ $json.summary.found }}" },
+            { "name": "valid_count", "value": "={{ $json.summary.created }}" },
+            { "name": "duplicates_count", "value": "={{ $json.summary.duplicates }}" },
+            { "name": "status", "value": "completed" }
+          ]
+        }
+      },
+      "name": "Supabase - Search Log",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [2860, -200],
+      "continueOnFail": true,
+      "credentials": {
+        "supabaseApi": {
+          "id": "8TEbcDMv4pFPkspM",
+          "name": "HUVIbase"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"success\": true,\n  \"found\": {{ $('Prepare Logs').first().json.summary.found || 0 }},\n  \"created\": {{ $('Prepare Logs').first().json.summary.created || 0 }},\n  \"duplicates\": {{ $('Prepare Logs').first().json.summary.duplicates || 0 }},\n  \"errors\": 0,\n  \"credits_consumed\": {{ $('Prepare Logs').first().json.weight || 2 }},\n  \"credits_total\": {{ $('Prepare Logs').first().json.newUsed }}\n}",
+        "options": {}
+      },
+      "name": "Respond Webhook - Success",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [3080, -300]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [[{ "node": "Supabase - Get Credits", "type": "main", "index": 0 }]]
+    },
+    "Supabase - Get Credits": {
+      "main": [[{ "node": "IF - Credits Available", "type": "main", "index": 0 }]]
+    },
+    "IF - Credits Available": {
+      "main": [
+        [{ "node": "Firecrawl Search API", "type": "main", "index": 0 }],
+        [{ "node": "Respond Webhook - No Credits", "type": "main", "index": 0 }]
+      ]
+    },
+    "Firecrawl Search API": {
+      "main": [[{ "node": "Extrair Resultados", "type": "main", "index": 0 }]]
+    },
+    "Extrair Resultados": {
+      "main": [[{ "node": "IF - API Success", "type": "main", "index": 0 }]]
+    },
+    "IF - API Success": {
+      "main": [
+        [{ "node": "IF - Has Results", "type": "main", "index": 0 }],
+        [{ "node": "Respond Webhook - API Error", "type": "main", "index": 0 }]
+      ]
+    },
+    "IF - Has Results": {
+      "main": [
+        [{ "node": "Supabase - Get Existing Opps", "type": "main", "index": 0 }],
+        [{ "node": "Empty Summary", "type": "main", "index": 0 }]
+      ]
+    },
+    "Empty Summary": {
+      "main": [[{ "node": "Prepare Logs", "type": "main", "index": 0 }]]
+    },
+    "Supabase - Get Existing Opps": {
+      "main": [[{ "node": "Deduplicação e Scoring", "type": "main", "index": 0 }]]
+    },
+    "Deduplicação e Scoring": {
+      "main": [[{ "node": "IF - Has Leads", "type": "main", "index": 0 }]]
+    },
+    "IF - Has Leads": {
+      "main": [
+        [{ "node": "Supabase - Create Opps", "type": "main", "index": 0 }],
+        [{ "node": "Prepare Logs", "type": "main", "index": 0 }]
+      ]
+    },
+    "Supabase - Create Opps": {
+      "main": [[{ "node": "Prepare Logs", "type": "main", "index": 0 }]]
+    },
+    "Prepare Logs": {
+      "main": [[{ "node": "Supabase - Update Credits", "type": "main", "index": 0 }]]
+    },
+    "Supabase - Update Credits": {
+      "main": [[{ "node": "Supabase - Search Log", "type": "main", "index": 0 }]]
+    },
+    "Supabase - Search Log": {
+      "main": [[{ "node": "Respond Webhook - Success", "type": "main", "index": 0 }]]
+    }
+  }
+}

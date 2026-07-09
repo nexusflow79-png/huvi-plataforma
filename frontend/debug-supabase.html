@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>HUVI — Supabase Debugger</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #0f172a;
+      color: #e2e8f0;
+      padding: 40px;
+      margin: 0;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    h1 {
+      color: #f97316;
+      border-bottom: 2px solid #334155;
+      padding-bottom: 10px;
+    }
+    .card {
+      background: #1e293b;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      border: 1px solid #334155;
+    }
+    .btn {
+      background: #f97316;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    .btn:hover {
+      background: #ea580c;
+    }
+    pre {
+      background: #090d16;
+      padding: 15px;
+      border-radius: 6px;
+      overflow-x: auto;
+      border: 1px solid #1e293b;
+      color: #38bdf8;
+    }
+    .status-badge {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: bold;
+    }
+    .success { background: #065f46; color: #34d399; }
+    .error { background: #7f1d1d; color: #f87171; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔍 HUVI — Diagnóstico do Supabase</h1>
+    
+    <div class="card">
+      <p>Esta página realiza consultas diretas no banco de dados Supabase do seu projeto para auditar o status das campanhas, oportunidades e se há alguma falha de sincronização de IDs (multi-tenancy).</p>
+      <button class="btn" id="btn-diagnosticar">Executar Diagnóstico Completo</button>
+    </div>
+
+    <div class="card">
+      <h3>Sessão & Tenant Atuais</h3>
+      <div id="auth-status">Aguardando execução...</div>
+    </div>
+
+    <div class="card">
+      <h3>Lista de Campanhas no Supabase (Sem filtro de tenant)</h3>
+      <div id="campaigns-status">Aguardando execução...</div>
+    </div>
+
+    <div class="card">
+      <h3>Lista de Oportunidades</h3>
+      <div id="opportunities-status">Aguardando execução...</div>
+    </div>
+
+    <div class="card">
+      <h3>Logs de Erros de Requisições</h3>
+      <pre id="error-logs">Nenhum erro registrado.</pre>
+    </div>
+  </div>
+
+  <!-- Carregar bibliotecas do projeto -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/config.js"></script>
+  
+  <script>
+    document.getElementById('btn-diagnosticar').addEventListener('click', async () => {
+      const authStatusEl = document.getElementById('auth-status');
+      const campaignsStatusEl = document.getElementById('campaigns-status');
+      const opportunitiesStatusEl = document.getElementById('opportunities-status');
+      const errorLogsEl = document.getElementById('error-logs');
+      
+      errorLogsEl.textContent = "";
+      
+      function logError(title, err) {
+        console.error(err);
+        errorLogsEl.textContent += `[${title}] ${err.message || JSON.stringify(err)}\n`;
+      }
+
+      try {
+        // Inicializar Supabase Client usando a biblioteca global
+        const client = supabase.createClient(
+          HUVI_CONFIG.SUPABASE_URL,
+          HUVI_CONFIG.SUPABASE_ANON_KEY
+        );
+        
+        // 1. Obter usuário logado e sessão
+        const { data: { session }, error: sessionErr } = await client.auth.getSession();
+        if (sessionErr) throw sessionErr;
+        
+        if (!session) {
+          authStatusEl.innerHTML = `<span class="status-badge error">Usuário Não Autenticado</span><p>Por favor, faça login no HUVI primeiro em outra aba de seu navegador, depois recarregue esta página.</p>`;
+          return;
+        }
+        
+        const user = session.user;
+        let tenantId = user.app_metadata?.tenant_id;
+        
+        // Tentar buscar do profile se não estiver no app_metadata
+        if (!tenantId) {
+          const { data: prof, error: profErr } = await client
+            .from('profiles')
+            .select('tenant_id')
+            .eq('auth_user_id', user.id)
+            .single();
+          if (!profErr && prof) {
+            tenantId = prof.tenant_id;
+          }
+        }
+        
+        authStatusEl.innerHTML = `
+          <p><strong>Usuário:</strong> ${user.email} (ID: ${user.id})</p>
+          <p><strong>Tenant ID Detectado:</strong> <code>${tenantId}</code></p>
+        `;
+
+        // 2. Buscar Oportunidades
+        const { data: opps, error: oppsErr } = await client
+          .from('opportunities')
+          .select('*')
+          .is('deleted_at', null);
+          
+        if (oppsErr) logError('Opportunities Query', oppsErr);
+        
+        if (opps) {
+          opportunitiesStatusEl.innerHTML = `
+            <p>Total de Oportunidades encontradas: <strong>${opps.length}</strong></p>
+            <pre>${JSON.stringify(opps.map(o => ({ id: o.id, company_name: o.company_name, status: o.status, tenant_id: o.tenant_id })), null, 2)}</pre>
+          `;
+        }
+
+        // 3. Buscar Campanhas
+        const { data: camps, error: campsErr } = await client
+          .from('campaigns')
+          .select('*, opportunities(company_name)')
+          .is('deleted_at', null);
+          
+        if (campsErr) logError('Campaigns Query', campsErr);
+        
+        if (camps) {
+          campaignsStatusEl.innerHTML = `
+            <p>Total de Campanhas encontradas: <strong>${camps.length}</strong></p>
+            <pre>${JSON.stringify(camps.map(c => ({ id: c.id, opportunity_id: c.opportunity_id, status: c.status, channel: c.channel, tenant_id: c.tenant_id, company_name: c.opportunities?.company_name })), null, 2)}</pre>
+          `;
+        }
+        
+      } catch (err) {
+        logError('Diagnóstico Geral', err);
+      }
+    });
+  </script>
+</body>
+</html>

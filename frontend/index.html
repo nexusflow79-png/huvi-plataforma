@@ -1,0 +1,1608 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="HUVI — Hub de Vendas Inteligente. Transforme produtos e serviços em receita real.">
+  <link rel="manifest" href="manifest.json">
+  <link rel="canonical" href="https://huvi.app.br/">
+  <meta property="og:title" content="HUVI — Hub de Vendas Inteligente">
+  <meta property="og:description" content="Transforme produtos e serviços em oportunidades reais de venda com inteligência artificial.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://huvi.app.br/">
+  <meta property="og:image" content="https://huvi.app.br/assets/icons/icon-512.png">
+  <meta property="og:image:width" content="512">
+  <meta property="og:image:height" content="512">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="https://huvi.app.br/assets/icons/icon-512.png">
+  <link rel="icon" type="image/svg+xml" href="/assets/icons/favicon.svg">
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https:; connect-src 'self' https://*.supabase.co https://fonts.googleapis.com https://fonts.gstatic.com; font-src 'self' https://fonts.gstatic.com; frame-src 'self';">
+  <title>HUVI — Hub de Vendas Inteligente</title>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "HUVI — Hub de Vendas Inteligente",
+    "description": "Plataforma de vendas inteligente com IA para gestão de oportunidades, campanhas e conversões.",
+    "applicationCategory": "BusinessApplication",
+    "operatingSystem": "Web",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "BRL"
+    }
+  }
+  </script>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Estilos -->
+  <link rel="stylesheet" href="css/design-system.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/pages.css">
+</head>
+<body>
+
+  <!-- ========================================== -->
+  <!-- TELA DE AUTENTICAÇÃO -->
+  <!-- ========================================== -->
+  <div id="auth-screen" class="screen auth-screen active">
+    <div class="auth-container card">
+      <div class="auth-brand">
+        <div class="auth-logo">
+          <span class="logo-icon">⚡</span>
+          <h1 class="logo-text">HUVI</h1>
+        </div>
+        <p class="auth-tagline">Hub de Vendas Inteligente</p>
+      </div>
+
+      <!-- Formulário de Login -->
+      <form id="login-form" class="auth-form active" novalidate>
+        <h2 class="auth-title">Bem-vindo de volta</h2>
+        <p class="auth-subtitle">Entre na sua conta para gerenciar suas vendas</p>
+        
+        <div class="form-group">
+          <label class="form-label" for="login-email">E-mail</label>
+          <input type="email" id="login-email" class="form-input" placeholder="seu@email.com" required autocomplete="username">
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label" for="login-password">Senha</label>
+          <input type="password" id="login-password" class="form-input" placeholder="••••••••" required autocomplete="current-password">
+        </div>
+        
+        <button type="submit" id="login-submit" class="btn btn-primary btn-full">
+          <span class="btn-text">Entrar</span>
+          <span class="btn-loader hidden"></span>
+        </button>
+
+        <div class="auth-links">
+          <button type="button" id="show-register" class="auth-link">Criar uma conta</button>
+          <button type="button" id="show-recovery" class="auth-link">Esqueceu a senha?</button>
+        </div>
+      </form>
+
+      <!-- Formulário de Registro (Onboarding) -->
+      <form id="register-form" class="auth-form" novalidate>
+        <h2 class="auth-title">Criar nova conta</h2>
+        <p class="auth-subtitle">Inicie sua prospecção inteligente em minutos</p>
+        
+        <div class="form-group">
+          <label class="form-label" for="register-name">Nome Completo / Empresa</label>
+          <input type="text" id="register-name" class="form-input" placeholder="Seu nome" required autocomplete="name">
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label" for="register-email">E-mail Corporativo</label>
+          <input type="email" id="register-email" class="form-input" placeholder="seu@empresa.com" required autocomplete="email">
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label" for="register-password">Senha</label>
+          <input type="password" id="register-password" class="form-input" placeholder="Mínimo 8 caracteres" required autocomplete="new-password">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="register-password-confirm">Confirmar Senha</label>
+          <input type="password" id="register-password-confirm" class="form-input" placeholder="Digite a senha novamente" required autocomplete="new-password">
+        </div>
+        
+        <button type="submit" id="register-submit" class="btn btn-primary btn-full">
+          <span class="btn-text">Cadastrar</span>
+          <span class="btn-loader hidden"></span>
+        </button>
+
+        <div class="auth-links">
+          <button type="button" id="show-login" class="auth-link">Já tem conta? Entrar</button>
+        </div>
+      </form>
+
+      <!-- Formulário de Recuperação de Senha -->
+      <form id="recovery-form" class="auth-form" novalidate>
+        <h2 class="auth-title">Recuperar acesso</h2>
+        <p class="auth-subtitle">Enviaremos um link de redefinição de senha por e-mail</p>
+        
+        <div class="form-group">
+          <label class="form-label" for="recovery-email">Seu E-mail</label>
+          <input type="email" id="recovery-email" class="form-input" placeholder="seu@email.com" required autocomplete="email">
+        </div>
+        
+        <button type="submit" id="recovery-submit" class="btn btn-primary btn-full">
+          <span class="btn-text">Enviar Link</span>
+          <span class="btn-loader hidden"></span>
+        </button>
+
+        <div class="auth-links">
+          <button type="button" id="show-login-from-recovery" class="auth-link">Voltar para o Login</button>
+        </div>
+      </form>
+    </div>
+    
+    <div id="auth-toast" class="toast hidden"></div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- APLICAÇÃO PRINCIPAL (APP SCREEN) -->
+  <!-- ========================================== -->
+  <div id="app-screen" class="screen app-screen">
+    
+    <!-- Sidebar (Navegação Desktop) -->
+    <aside id="sidebar" class="sidebar">
+      <div class="sidebar-brand">
+        <span class="logo-icon-sm">⚡</span>
+        <span class="sidebar-brand-text">HUVI</span>
+      </div>
+
+      <nav class="sidebar-nav">
+        <button class="nav-item" data-page="offers">
+          <span class="nav-icon">🏷️</span>
+          <span class="nav-label">Ofertas</span>
+        </button>
+        <button class="nav-item" data-page="sources">
+          <span class="nav-icon">🔗</span>
+          <span class="nav-label">Fontes</span>
+        </button>
+        <button class="nav-item" data-page="discovery">
+          <span class="nav-icon">🔍</span>
+          <span class="nav-label">Descoberta</span>
+        </button>
+        <button class="nav-item" data-page="opportunities">
+          <span class="nav-icon">🎯</span>
+          <span class="nav-label">Oportunidades</span>
+        </button>
+        <button class="nav-item" data-page="campaigns">
+          <span class="nav-icon">📣</span>
+          <span class="nav-label">Campanhas</span>
+        </button>
+        <button class="nav-item" data-page="conversations">
+          <span class="nav-icon">💬</span>
+          <span class="nav-label">Conversas</span>
+        </button>
+        <button class="nav-item" data-page="conversions">
+          <span class="nav-icon">💰</span>
+          <span class="nav-label">Conversões</span>
+        </button>
+        <button class="nav-item active" data-page="dashboard">
+          <span class="nav-icon">📊</span>
+          <span class="nav-label">Dashboard</span>
+        </button>
+        <button class="nav-item" data-page="settings">
+          <span class="nav-icon">⚙️</span>
+          <span class="nav-label">Configurações</span>
+        </button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <button id="logout-btn" class="nav-item nav-logout">
+          <span class="nav-icon">🚪</span>
+          <span class="nav-label">Sair</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Conteúdo Principal -->
+    <main class="main-content">
+      
+      <!-- Header -->
+      <header class="main-header">
+        <button id="menu-toggle" class="menu-toggle" aria-label="Abrir Menu">
+          <span></span><span></span><span></span>
+        </button>
+        <h2 id="page-title" class="page-title">Dashboard</h2>
+        <div class="header-actions">
+          <div class="user-info">
+            <span>👤</span>
+            <span id="user-name" class="user-name">Carregando...</span>
+          </div>
+        </div>
+      </header>
+
+      <!-- Container das Páginas SPA -->
+      <div class="pages-container">
+
+        <!-- ========== PÁGINA: DASHBOARD ========== -->
+        <section id="page-dashboard" class="page active">
+          <!-- KPIs -->
+          <div class="kpi-grid">
+            <div class="kpi-card">
+              <div class="kpi-icon">🎯</div>
+              <div class="kpi-info">
+                <span class="kpi-label">Oportunidades</span>
+                <span id="db-opportunities" class="kpi-value">0</span>
+              </div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-icon" style="color: var(--warning-500)">⭐</div>
+              <div class="kpi-info">
+                <span class="kpi-label">Qualificadas</span>
+                <span id="db-qualified" class="kpi-value">0</span>
+              </div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-icon" style="color: var(--primary-500)">📣</div>
+              <div class="kpi-info">
+                <span class="kpi-label">Campanhas Ativas</span>
+                <span id="db-campaigns" class="kpi-value">0</span>
+              </div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-icon" style="color: var(--success-500)">✅</div>
+              <div class="kpi-info">
+                <span class="kpi-label">Conversões</span>
+                <span id="db-conversions" class="kpi-value">0</span>
+              </div>
+            </div>
+            <div class="kpi-card kpi-highlight">
+              <div class="kpi-icon" style="background: rgba(255,255,255,0.2)">💰</div>
+              <div class="kpi-info">
+                <span class="kpi-label" style="color: rgba(255,255,255,0.8)">Receita Gerada</span>
+                <span id="db-revenue" class="kpi-value" style="color: #fff">R$ 0,00</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Gráficos -->
+          <div class="charts-grid">
+            <div class="chart-card chart-wide">
+              <h4 class="chart-title">Evolução do Funil (Oportunidades x Conversões)</h4>
+              <div style="position: relative; height: 300px; width: 100%;">
+                <canvas id="chart-funnel"></canvas>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ========== PÁGINA: OPORTUNIDADES ========== -->
+        <section id="page-opportunities" class="page">
+          <div class="page-header">
+            <h3 class="section-title">Oportunidades de Venda</h3>
+          </div>
+
+          <!-- Filtros -->
+          <div class="card" style="margin-bottom: var(--space-6); padding: var(--space-4);">
+            <div class="filter-group">
+              <input type="text" id="opp-search" class="form-input" placeholder="Buscar empresa ou contato..." style="flex: 2; min-width: 200px;">
+              
+              <select id="opp-filter-status" class="form-select">
+                <option value="">Todos os Status</option>
+                <option value="discovered">Descoberta</option>
+                <option value="campaign_created">Campanha Criada</option>
+                <option value="contacted">Contatada</option>
+                <option value="in_conversation">Em Conversa</option>
+                <option value="converted">Convertida</option>
+                <option value="lost">Perdida</option>
+              </select>
+
+              <select id="opp-filter-state" class="form-select">
+                <option value="">Todos os Estados (UF)</option>
+                <option value="AC">Acre</option>
+                <option value="AL">Alagoas</option>
+                <option value="AP">Amapá</option>
+                <option value="AM">Amazonas</option>
+                <option value="BA">Bahia</option>
+                <option value="CE">Ceará</option>
+                <option value="DF">Distrito Federal</option>
+                <option value="ES">Espírito Santo</option>
+                <option value="GO">Goiás</option>
+                <option value="MA">Maranhão</option>
+                <option value="MT">Mato Grosso</option>
+                <option value="MS">Mato Grosso do Sul</option>
+                <option value="MG">Minas Gerais</option>
+                <option value="PA">Pará</option>
+                <option value="PB">Paraíba</option>
+                <option value="PR">Paraná</option>
+                <option value="PE">Pernambuco</option>
+                <option value="PI">Piauí</option>
+                <option value="RJ">Rio de Janeiro</option>
+                <option value="RN">Rio Grande do Norte</option>
+                <option value="RS">Rio Grande do Sul</option>
+                <option value="RO">Rondônia</option>
+                <option value="RR">Roraima</option>
+                <option value="SC">Santa Catarina</option>
+                <option value="SP">São Paulo</option>
+                <option value="SE">Sergipe</option>
+                <option value="TO">Tocantins</option>
+              </select>
+
+              <select id="opp-filter-city" class="form-select">
+                <option value="">Todas as Cidades</option>
+              </select>
+
+              <select id="opp-filter-score" class="form-select">
+                <option value="">Qualquer Pontuação</option>
+                <option value="high">Pontuação Alta (70+)</option>
+                <option value="medium">Pontuação Média (40-69)</option>
+                <option value="low">Pontuação Baixa (<40)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Lista de Oportunidades -->
+          <div class="card" style="padding: 0; overflow: hidden;">
+            <div style="padding:var(--space-4) var(--space-5); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:var(--space-2); border-bottom:1px solid var(--surface-300);">
+              <label style="display:flex; align-items:center; gap:var(--space-2); font-size:var(--font-sm); color:var(--text-secondary); cursor:pointer;">
+                <input type="checkbox" id="opp-check-all" title="Selecionar todas">
+                Selecionar todas
+              </label>
+              <button type="button" id="opp-btn-delete-selected" class="btn btn-ghost btn-sm" style="font-size:var(--font-xs); color:var(--error-500);" disabled>🗑️ Excluir Selecionados</button>
+            </div>
+            <div style="overflow-x: auto; width: 100%;">
+              <table class="form-group" style="width: 100%; border-collapse: collapse; margin-bottom: 0;">
+                <thead>
+                  <tr style="text-align: left; border-bottom: 1px solid var(--surface-300); background: rgba(0,0,0,0.02)">
+                    <th style="padding: var(--space-3) var(--space-4); width:40px; text-align:center;"></th>
+                    <th style="padding: var(--space-4) var(--space-5); color: var(--text-secondary); font-weight: 600;">Empresa</th>
+                    <th style="padding: var(--space-4) var(--space-5); color: var(--text-secondary); font-weight: 600;">Contato</th>
+                    <th style="padding: var(--space-4) var(--space-5); color: var(--text-secondary); font-weight: 600;">Cidade/UF</th>
+                    <th style="padding: var(--space-4) var(--space-5); color: var(--text-secondary); font-weight: 600;">Status</th>
+                    <th style="padding: var(--space-4) var(--space-5); color: var(--text-secondary); font-weight: 600; text-align: center;">Score</th>
+                    <th style="padding: var(--space-4) var(--space-5); color: var(--text-secondary); font-weight: 600; text-align: right;">Ações</th>
+                  </tr>
+                </thead>
+                <tbody id="opportunities-list">
+                  <!-- Injetado dinamicamente -->
+                  <tr>
+                    <td colspan="7" style="text-align: center; padding: var(--space-10); color: var(--text-muted);">
+                      Carregando oportunidades...
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Modal Oportunidade Detalhes -->
+          <div id="modal-opportunity" class="modal hidden">
+            <div class="modal-overlay"></div>
+            <div class="modal-content" style="max-width: 640px;">
+              <div class="modal-header">
+                <h3 id="modal-opp-title">Detalhes da Oportunidade</h3>
+                <button type="button" class="modal-close" id="close-opp-modal">&times;</button>
+              </div>
+              <div class="modal-body" style="padding-top: var(--space-4);">
+                
+                <!-- Abas -->
+                <div class="settings-tabs" style="margin-bottom: var(--space-5);">
+                  <button type="button" class="tab-btn active" data-tab="tab-opp-info">Informações</button>
+                  <button type="button" class="tab-btn" data-tab="tab-opp-audit">Diagnóstico</button>
+                  <button type="button" class="tab-btn" data-tab="tab-opp-score">Classificação</button>
+                  <button type="button" class="tab-btn" data-tab="tab-opp-strategy">Estratégia</button>
+                </div>
+
+                <!-- Aba: Informações -->
+                <div id="tab-opp-info" class="tab-content active">
+                  <div class="detail-section">
+                    <h4 class="detail-section-title">Dados Cadastrais</h4>
+                    <div class="detail-grid">
+                      <div class="detail-field"><span class="detail-label">Empresa</span><span id="det-company" class="detail-value">-</span></div>
+                      <div class="detail-field"><span class="detail-label">Contato</span><span id="det-contact" class="detail-value">-</span></div>
+                      <div class="detail-field"><span class="detail-label">E-mail</span><span id="det-email" class="detail-value">-</span></div>
+                      <div class="detail-field"><span class="detail-label">Telefone</span><span id="det-phone" class="detail-value">-</span></div>
+                      <div class="detail-field"><span class="detail-label">Website</span><span id="det-website" class="detail-value">-</span></div>
+                      <div class="detail-field"><span class="detail-label">Instagram</span><span id="det-instagram" class="detail-value">-</span></div>
+                      <div class="detail-field"><span class="detail-label">Localidade</span><span id="det-location" class="detail-value">-</span></div>
+                      <div class="detail-field"><span class="detail-label">Status Atual</span><span id="det-status" class="detail-value">-</span></div>
+                      <div class="detail-field"><span class="detail-label">Categoria</span><span id="det-category" class="detail-value">-</span></div>
+                      <div class="detail-field"><span class="detail-label">Avaliação</span><span class="detail-value"><strong id="det-rating-val">-</strong> ★ (<span id="det-rating-count">0</span> avaliações)</span></div>
+                      <div class="detail-field"><span class="detail-label">Link no Maps</span><span id="det-maps-url" class="detail-value">-</span></div>
+                      <div class="detail-field"><span class="detail-label">Origem</span><span id="det-origin" class="detail-value">-</span></div>
+                      <div class="detail-field"><span class="detail-label">Descoberto via</span><span id="det-source-service" class="detail-value">-</span></div>
+                      <div class="detail-field" style="grid-column: span 2;"><span class="detail-label">Endereço Completo</span><span id="det-address" class="detail-value">-</span></div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Aba: Diagnóstico -->
+                <div id="tab-opp-audit" class="tab-content">
+                  <div id="opp-audit-empty" class="empty-state" style="padding: var(--space-8) 0;">
+                    <span class="empty-icon">🔬</span>
+                    <p>Diagnóstico ainda não gerado</p>
+                    <p class="empty-hint">O Auditor coletará essas informações ao acionar o pipeline.</p>
+                  </div>
+                  <div id="opp-audit-content" class="hidden">
+                    <div class="detail-section">
+                      <h4 class="detail-section-title">Resumo do Diagnóstico</h4>
+                      <p id="det-audit-summary" style="margin-bottom: var(--space-4); font-size: var(--font-base);"></p>
+                      
+                      <h4 class="detail-section-title">Pontos Fortes</h4>
+                      <div id="det-audit-strengths" style="margin-bottom: var(--space-4); color: var(--success-600); white-space: pre-line;"></div>
+                      
+                      <h4 class="detail-section-title">Pontos Fracos</h4>
+                      <div id="det-audit-weaknesses" style="margin-bottom: var(--space-4); color: var(--error-500); white-space: pre-line;"></div>
+                      
+                      <h4 class="detail-section-title">Recomendações Comerciais</h4>
+                      <div id="det-audit-recommendations" style="white-space: pre-line;"></div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Aba: Classificação -->
+                <div id="tab-opp-score" class="tab-content">
+                  <div id="opp-score-empty" class="empty-state" style="padding: var(--space-8) 0;">
+                    <span class="empty-icon">⭐</span>
+                    <p>Sem classificação no momento</p>
+                  </div>
+                  <div id="opp-score-content" class="hidden">
+                    <div class="detail-section">
+                      <h4 class="detail-section-title">Pontuações Oficiais</h4>
+                      <div class="detail-grid" style="margin-bottom: var(--space-4);">
+                        <div class="detail-field">
+                          <span class="detail-label">Score Comercial</span>
+                          <span id="det-score-comm" class="detail-value" style="font-size: var(--font-xl); font-weight: 800;">-</span>
+                        </div>
+                        <div class="detail-field">
+                          <span class="detail-label">Score de Viabilidade</span>
+                          <span id="det-score-viab" class="detail-value" style="font-size: var(--font-xl); font-weight: 800;">-</span>
+                        </div>
+                      </div>
+                      <h4 class="detail-section-title">Justificativa da IA</h4>
+                      <p id="det-score-justification" style="font-size: var(--font-base);"></p>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Aba: Estratégia -->
+                <div id="tab-opp-strategy" class="tab-content">
+                  <div id="opp-strategy-empty" class="empty-state" style="padding: var(--space-8) 0;">
+                    <span class="empty-icon">💡</span>
+                    <p>Estratégia não definida</p>
+                  </div>
+                  <div id="opp-strategy-content" class="hidden">
+                    <div class="detail-section">
+                      <h4 class="detail-section-title">Plano de Abordagem</h4>
+                      <p id="det-strat-approach" style="margin-bottom: var(--space-4); font-size: var(--font-base);"></p>
+                      
+                      <div class="detail-grid">
+                        <div class="detail-field"><span class="detail-label">Tipo de Conversão</span><span id="det-strat-conv" class="detail-value">-</span></div>
+                        <div class="detail-field"><span class="detail-label">Destino do Lead</span><span id="det-strat-dest" class="detail-value">-</span></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-ghost" id="cancel-opp-detail">Fechar</button>
+                  <button type="button" class="btn btn-primary" id="btn-run-pipeline">
+                    <span class="btn-text">⚡ Acionar Pipeline IA (n8n)</span>
+                    <span class="btn-loader hidden"></span>
+                  </button>
+                </div>
+
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ========== PÁGINA: CAMPANHAS ========== -->
+        <section id="page-campaigns" class="page">
+          <div class="page-header">
+            <h3 class="section-title">Campanhas Comerciais</h3>
+          </div>
+
+          <div class="card" style="padding: 0; overflow: hidden;">
+            <div style="padding:var(--space-4) var(--space-5); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:var(--space-2); border-bottom:1px solid var(--surface-300);">
+              <label style="display:flex; align-items:center; gap:var(--space-2); font-size:var(--font-sm); color:var(--text-secondary); cursor:pointer;">
+                <input type="checkbox" id="camp-check-all" title="Selecionar todas">
+                Selecionar todas
+              </label>
+              <button type="button" id="camp-btn-delete-selected" class="btn btn-ghost btn-sm" style="font-size:var(--font-xs); color:var(--error-500);" disabled>🗑️ Excluir Selecionados</button>
+            </div>
+            <div style="overflow-x: auto; width: 100%;">
+              <table style="width: 100%; border-collapse: collapse; margin-bottom: 0;">
+                <thead>
+                  <tr style="text-align: left; border-bottom: 1px solid var(--surface-300); background: rgba(0,0,0,0.02)">
+                    <th style="padding: var(--space-3) var(--space-4); width:40px; text-align:center;"></th>
+                    <th style="padding: var(--space-4) var(--space-5); color: var(--text-secondary); font-weight: 600;">Oportunidade</th>
+                    <th style="padding: var(--space-4) var(--space-5); color: var(--text-secondary); font-weight: 600;">Canal</th>
+                    <th style="padding: var(--space-4) var(--space-5); color: var(--text-secondary); font-weight: 600;">Assunto</th>
+                    <th style="padding: var(--space-4) var(--space-5); color: var(--text-secondary); font-weight: 600;">Data</th>
+                    <th style="padding: var(--space-4) var(--space-5); color: var(--text-secondary); font-weight: 600;">Status</th>
+                    <th style="padding: var(--space-4) var(--space-5); color: var(--text-secondary); font-weight: 600; text-align: right;">Mensagem</th>
+                  </tr>
+                </thead>
+                <tbody id="campaigns-list">
+                  <tr>
+                    <td colspan="7" style="text-align: center; padding: var(--space-10); color: var(--text-muted);">
+                      Nenhuma campanha gerada.
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </section>
+
+        <!-- ========== PÁGINA: CONVERSÕES ========== -->
+        <section id="page-conversions" class="page">
+          <div class="page-header">
+            <h3 class="section-title">Registro de Conversões</h3>
+            <button type="button" id="btn-new-conversion" class="btn btn-primary">+ Registrar Venda</button>
+          </div>
+
+          <div class="card" style="padding: 0; overflow: hidden;">
+            <div style="overflow-x: auto; width: 100%;">
+              <table style="width: 100%; border-collapse: collapse; margin-bottom: 0;">
+                <thead>
+                  <tr style="text-align: left; border-bottom: 1px solid var(--surface-300); background: rgba(0,0,0,0.02)">
+                    <th style="padding: var(--space-4) var(--space-5); color: var(--text-secondary); font-weight: 600;">Oportunidade</th>
+                    <th style="padding: var(--space-4) var(--space-5); color: var(--text-secondary); font-weight: 600;">Tipo</th>
+                    <th style="padding: var(--space-4) var(--space-5); color: var(--text-secondary); font-weight: 600;">Valor Previsto</th>
+                    <th style="padding: var(--space-4) var(--space-5); color: var(--text-secondary); font-weight: 600;">Valor Fechado</th>
+                    <th style="padding: var(--space-4) var(--space-5); color: var(--text-secondary); font-weight: 600;">Data</th>
+                    <th style="padding: var(--space-4) var(--space-5); color: var(--text-secondary); font-weight: 600;">Notas</th>
+                  </tr>
+                </thead>
+                <tbody id="conversions-list">
+                  <tr>
+                    <td colspan="6" style="text-align: center; padding: var(--space-10); color: var(--text-muted);">
+                      Nenhuma conversão registrada.
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Modal Registrar Conversão Manual -->
+          <div id="modal-conversion" class="modal hidden">
+            <div class="modal-overlay"></div>
+            <div class="modal-content">
+              <div class="modal-header">
+                <h3>Registrar Venda Manual</h3>
+                <button type="button" class="modal-close" id="close-conversion-modal">&times;</button>
+              </div>
+              <form id="conversion-form" class="modal-body" novalidate>
+                
+                <div class="form-group">
+                  <label class="form-label" for="conv-opportunity">Oportunidade / Lead (Obrigatório)</label>
+                  <select id="conv-opportunity" class="form-select" required>
+                    <option value="">Carregando leads...</option>
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label" for="conv-type">Tipo de Conversão</label>
+                  <select id="conv-type" class="form-select" required>
+                    <option value="manual">Manual / Venda Direta</option>
+                    <option value="direct_checkout">Asaas Checkout (Direta)</option>
+                    <option value="appointment">Agenda Nexus (Reunião)</option>
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label" for="conv-closed-value">Valor Fechado (R$ - Obrigatório)</label>
+                  <input type="text" id="conv-closed-value" class="form-input" placeholder="1500,00" required>
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label" for="conv-notes">Notas / Observações</label>
+                  <textarea id="conv-notes" class="form-textarea" placeholder="Observações do fechamento..."></textarea>
+                </div>
+
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-ghost" id="cancel-conversion">Cancelar</button>
+                  <button type="submit" class="btn btn-primary">Registrar Venda</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </section>
+
+        <!-- ========== PÁGINA: OFERTAS ========== -->
+        <section id="page-offers" class="page">
+          <div class="page-header">
+            <h3 class="section-title">Suas Ofertas</h3>
+            <button type="button" id="btn-new-offer" class="btn btn-primary">+ Criar Oferta</button>
+          </div>
+
+          <div id="offers-list" class="data-list">
+            <!-- Injetado dinamicamente -->
+          </div>
+
+          <!-- Modal Oferta -->
+          <div id="modal-offer" class="modal hidden">
+            <div class="modal-overlay"></div>
+            <div class="modal-content">
+              <div class="modal-header">
+                <h3 id="modal-offer-title">Criar Oferta</h3>
+                <button type="button" class="modal-close" id="close-offer-modal">&times;</button>
+              </div>
+              <form id="offer-form" class="modal-body" novalidate>
+                <input type="hidden" id="offer-id">
+
+                <div class="form-group">
+                  <label class="form-label" for="offer-name">Nome da Oferta (Obrigatório)</label>
+                  <input type="text" id="offer-name" class="form-input" placeholder="Ex: Consultoria Comercial Premium" required>
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label" for="offer-description">Descrição</label>
+                  <textarea id="offer-description" class="form-textarea" placeholder="Descreva os diferenciais da sua oferta..."></textarea>
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label" for="offer-price">Preço (R$)</label>
+                  <input type="text" id="offer-price" class="form-input" placeholder="1500,00">
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">Imagem da Oferta (Max 3MB)</label>
+                  <div id="offer-image-dropzone" class="file-dropzone">
+                    <input type="file" id="offer-image-input" class="hidden" accept="image/*">
+                    <input type="hidden" id="offer-image-url">
+                    
+                    <div id="offer-image-placeholder" class="file-placeholder">
+                      <span class="file-placeholder-icon">📸</span>
+                      <span class="file-placeholder-text">Clique ou arraste a imagem aqui</span>
+                      <span class="file-hint">Formatos: JPG, PNG, WebP (Max 3MB)</span>
+                    </div>
+
+                    <div id="offer-image-preview-container" class="file-info hidden" style="flex-direction: row; gap: var(--space-3); align-items: center; width: 100%; border: none; background: transparent; padding: var(--space-3);">
+                      <img id="offer-image-preview" src="" alt="Preview" style="max-height: 70px; border-radius: var(--radius-sm); border: 1px solid var(--surface-300);">
+                      <div class="file-info-name" id="offer-image-filename" style="flex: 1;"></div>
+                      <button type="button" id="offer-image-remove" class="file-remove-btn">&times;</button>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label" for="offer-video-url">URL do Vídeo Demonstrativo</label>
+                  <input type="url" id="offer-video-url" class="form-input" placeholder="https://youtube.com/watch?v=...">
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label" for="offer-landing-page">URL da Landing Page</label>
+                  <input type="url" id="offer-landing-page" class="form-input" placeholder="https://suapagina.com/oferta">
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label" for="offer-checkout">URL do Checkout Asaas</label>
+                  <input type="url" id="offer-checkout" class="form-input" placeholder="https://checkout.asaas.com/...">
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label" for="offer-calendar">URL do Calendário Nexus</label>
+                  <input type="url" id="offer-calendar" class="form-input" placeholder="https://evo2.nexus-flow.tech/...">
+                </div>
+
+                <div class="form-group">
+                  <label class="toggle-label">
+                    <input type="checkbox" id="offer-active" checked>
+                    <span>Oferta Ativa (Visível para Campanhas e IA)</span>
+                  </label>
+                </div>
+
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-ghost" id="cancel-offer">Cancelar</button>
+                  <button type="submit" class="btn btn-primary">Salvar Oferta</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </section>
+
+        <!-- ========== PÁGINA: FONTES ========== -->
+        <section id="page-sources" class="page">
+          <div class="page-header">
+            <h3 class="section-title">Fontes de Pesquisa (Leads)</h3>
+            <button type="button" id="btn-new-source" class="btn btn-primary">+ Nova Fonte</button>
+          </div>
+
+          <div id="sources-list" class="data-list">
+            <!-- Injetado dinamicamente -->
+          </div>
+
+          <!-- Modal Nova Fonte -->
+          <div id="modal-source" class="modal hidden">
+            <div class="modal-overlay"></div>
+            <div class="modal-content">
+              <div class="modal-header">
+                <h3 id="modal-source-title">Nova Fonte de Captura</h3>
+                <button type="button" class="modal-close" id="close-source-modal">&times;</button>
+              </div>
+              <form id="source-form" class="modal-body" novalidate>
+                <input type="hidden" id="source-id">
+
+                <div class="form-group">
+                  <label class="form-label">Tipos de Origem (Selecione pelo menos um)</label>
+                  <div class="source-type-checkboxes">
+                    <label class="source-type-checkbox">
+                      <input type="checkbox" name="source-type" value="google_maps">
+                      <span class="source-type-check-icon">📍</span>
+                      <span class="source-type-check-label">Google Maps</span>
+                    </label>
+                    <label class="source-type-checkbox">
+                      <input type="checkbox" name="source-type" value="instagram">
+                      <span class="source-type-check-icon">📸</span>
+                      <span class="source-type-check-label">Instagram</span>
+                    </label>
+                    <label class="source-type-checkbox">
+                      <input type="checkbox" name="source-type" value="website">
+                      <span class="source-type-check-icon">🌐</span>
+                      <span class="source-type-check-label">Website</span>
+                    </label>
+                    <label class="source-type-checkbox">
+                      <input type="checkbox" name="source-type" value="web_search">
+                      <span class="source-type-check-icon">🔎</span>
+                      <span class="source-type-check-label">Busca Web</span>
+                    </label>
+                    <label class="source-type-checkbox">
+                      <input type="checkbox" name="source-type" value="directory">
+                      <span class="source-type-check-icon">📁</span>
+                      <span class="source-type-check-label">Diretório</span>
+                    </label>
+                    <label class="source-type-checkbox">
+                      <input type="checkbox" name="source-type" value="manual">
+                      <span class="source-type-check-icon">✏️</span>
+                      <span class="source-type-check-label">Manual</span>
+                    </label>
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label" for="source-name">Nome da Fonte</label>
+                  <input type="text" id="source-name" class="form-input" placeholder="Ex: Clínicas Médicas SP" required>
+                  <span id="source-name-help" class="form-help" style="display: block; font-size: var(--font-xs); color: var(--text-muted); margin-top: 4px;"></span>
+                </div>
+
+                <!-- Keywords (Apenas se Busca Web estiver ativo) -->
+                <div id="source-keywords-group" class="form-group hidden">
+                  <label class="form-label" for="source-keywords">Palavras-chave (uma por linha)</label>
+                  <textarea id="source-keywords" class="form-input" rows="4" placeholder="Ex: clínica médica em São Paulo&#10;consultório odontológico&#10;barbearia masculina" style="resize: vertical; min-height: 80px; font-family: var(--font-family);"></textarea>
+                  <span class="form-help" style="display: block; font-size: var(--font-xs); color: var(--text-muted); margin-top: 4px;">Quanto mais específico, melhores os resultados.</span>
+                </div>
+
+                <!-- Upload de Arquivo (Apenas se Diretório estiver ativo) -->
+                <div id="source-upload-area" class="form-group hidden">
+                  <label class="form-label">Arquivo de Leads</label>
+                  <div id="source-file-dropzone" class="image-upload-area">
+                    <input type="file" id="source-file-input" class="hidden" accept=".csv,.xlsx,.xls">
+                    
+                    <div id="source-file-placeholder" class="image-placeholder">
+                      <span class="image-placeholder-icon">📁</span>
+                      <span class="image-placeholder-text">Clique ou arraste o arquivo aqui</span>
+                      <span class="image-hint">Formatos aceitos: CSV, XLSX (Max 5MB)</span>
+                    </div>
+
+                    <div id="source-file-info" class="image-preview hidden" style="flex-direction: row; gap: 8px;">
+                      <span style="font-size: var(--font-xl)">📄</span>
+                      <span id="source-file-name" style="font-weight: 500;"></span>
+                      <button type="button" id="source-file-remove" class="image-remove-btn">&times;</button>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-ghost" id="cancel-source">Cancelar</button>
+                  <button type="submit" class="btn btn-primary">Salvar Fonte</button>
+                </div>
+              </form>
+            </div>
+          </div>
+
+          <!-- Modal Mapeamento & Importação (import-leads.js) -->
+          <div id="modal-import" class="modal hidden">
+            <div class="modal-overlay"></div>
+            <div class="modal-content" style="max-width: 640px;">
+              <div class="modal-header">
+                <h3>Mapear Colunas & Importar Leads</h3>
+                <button type="button" class="modal-close" id="close-import-modal">&times;</button>
+              </div>
+              <div class="modal-body" style="padding-top: var(--space-4);">
+                
+                <!-- Preview da Planilha -->
+                <div class="form-group" style="overflow-x: auto;">
+                  <label class="form-label">Visualização da Planilha (5 primeiras linhas)</label>
+                  <table class="form-group" style="width: 100%; border-collapse: collapse; font-size: var(--font-xs); border: 1px solid var(--surface-300);">
+                    <thead id="import-preview-head" style="background: rgba(0,0,0,0.02)"></thead>
+                    <tbody id="import-preview-body"></tbody>
+                  </table>
+                </div>
+
+                <!-- Seletor de Mapeamento -->
+                <div id="import-mapping" class="form-group" style="max-height: 250px; overflow-y: auto; padding-right: 8px; margin-bottom: var(--space-6);">
+                  <!-- Injetado dinamicamente -->
+                </div>
+
+                <!-- Progresso da Importação -->
+                <div id="import-progress" class="form-group hidden" style="background: var(--surface-300); border-radius: var(--radius-md); padding: var(--space-4);">
+                  <div style="display: flex; justify-content: space-between; font-size: var(--font-xs); margin-bottom: var(--space-2)">
+                    <span id="import-progress-text" style="font-weight: 600;">Importando leads...</span>
+                    <span id="import-progress-count">0 / 0</span>
+                  </div>
+                  <div style="background: rgba(0,0,0,0.08); height: 8px; border-radius: 4px; overflow: hidden;">
+                    <div id="import-progress-fill" style="background: var(--primary-500); width: 0%; height: 100%; transition: width 0.1s ease-out;"></div>
+                  </div>
+                </div>
+
+                <!-- Resultado Final -->
+                <div id="import-result" class="form-group hidden" style="padding: var(--space-4); background: var(--surface-0); border: 1px solid var(--surface-300); border-radius: var(--radius-md);">
+                  <!-- Injetado dinamicamente -->
+                </div>
+
+                <div id="import-modal-footer" class="modal-footer">
+                  <button type="button" class="btn btn-ghost" id="cancel-import">Cancelar</button>
+                  <button type="button" class="btn btn-primary" id="confirm-import" disabled>
+                    <span id="confirm-import-text">Importar</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ========== PÁGINA: DESCOBERTA DE OPORTUNIDADES ========== -->
+        <section id="page-discovery" class="page">
+          <div class="page-header" style="flex-direction: column; align-items: flex-start; gap: var(--space-2);">
+            <h3 class="section-title">Descoberta de Oportunidades</h3>
+            <p style="font-size:var(--font-sm); color:var(--text-muted); font-weight: normal;">
+              <strong>Descoberta</strong> é o motor de execução da prospecção. Diferente das <a href="#" onclick="document.querySelector('[data-page=\'sources\']').click(); return false;" style="color:var(--primary-500); text-decoration:underline;">Fontes</a> (que serve para cadastrar a origem), aqui você consome os créditos para buscar leads em tempo real e enviá-los para a Pipeline de Oportunidades.
+            </p>
+          </div>
+
+          <!-- Card de Créditos -->
+          <div class="card" style="margin-bottom: var(--space-6); padding: var(--space-5);">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:var(--space-3); margin-bottom:var(--space-4);">
+              <div>
+                <h4 style="font-weight:700; margin-bottom:var(--space-1);">🎟️ Créditos do Ciclo</h4>
+                <p style="font-size:var(--font-xs); color:var(--text-muted);">Cada operação de busca no Google Maps consome 1 crédito de oportunidade, independente de quantos leads forem encontrados.</p>
+              </div>
+              <div style="text-align:right;">
+                <span style="font-size:var(--font-2xl); font-weight:800; color:var(--primary-500);" id="disc-credits-used">0</span>
+                <span style="font-size:var(--font-sm); color:var(--text-muted);"> / <span id="disc-credits-limit">80</span></span>
+                <div style="font-size:var(--font-xs); color:var(--text-muted); margin-top:2px;">Renova em <strong id="disc-credits-reset">—</strong></div>
+              </div>
+            </div>
+            <div style="background:var(--surface-300); border-radius:6px; height:10px; overflow:hidden;">
+              <div id="disc-credits-bar" style="background:var(--primary-500); height:100%; width:0%; transition:width 0.4s ease-out; border-radius:6px;"></div>
+            </div>
+          </div>
+
+          <!-- Formulário de Busca -->
+          <div class="card" style="margin-bottom: var(--space-6); padding: var(--space-5);">
+            <div style="display:flex; align-items:center; gap:var(--space-3); margin-bottom:var(--space-5); padding:var(--space-3) var(--space-4); background:linear-gradient(90deg, var(--primary-50) 0%, transparent 100%); border-left:4px solid var(--primary-500); border-radius:0 8px 8px 0;">
+              <span style="font-size:var(--font-2xl);">📍</span>
+              <div>
+                <h4 style="font-weight:800; font-size:var(--font-lg); margin:0; color:var(--text-primary);">Buscar no Google Maps</h4>
+                <p style="font-size:var(--font-xs); color:var(--text-muted); margin:2px 0 0 0;">Descubra oportunidades comerciais no Google Maps com Outscraper</p>
+              </div>
+            </div>
+            <div class="filter-group" style="flex-wrap:wrap;">
+              <div style="flex:2; min-width:200px;">
+                <label class="form-label" for="disc-segment">Segmento / Nicho</label>
+                <input type="text" id="disc-segment" class="form-input" placeholder="Ex: Clínicas Médicas, Barbearias, Restaurantes...">
+              </div>
+              <div style="flex:1; min-width:150px;">
+                <label class="form-label" for="disc-state">Estado (UF)</label>
+                <select id="disc-state" class="form-select">
+                  <option value="">Selecione o Estado</option>
+                </select>
+              </div>
+              <div style="flex:1; min-width:150px;">
+                <label class="form-label" for="disc-city">Cidade</label>
+                <select id="disc-city" class="form-select" disabled>
+                  <option value="">Selecione a Cidade</option>
+                </select>
+              </div>
+              <div style="flex:1; min-width:150px;">
+                <label class="form-label" for="disc-zone">Zona</label>
+                <select id="disc-zone" class="form-select" disabled>
+                  <option value="">Todas as zonas</option>
+                </select>
+              </div>
+            </div>
+            <div style="margin-top:var(--space-4); display:flex; gap:var(--space-3); align-items:center; flex-wrap:wrap;">
+              <button type="button" id="disc-btn-search" class="btn btn-primary" style="min-width:200px;">
+                <span class="btn-text">🔍 Iniciar Descoberta</span>
+                <span class="btn-loader hidden"></span>
+              </button>
+              <span style="font-size:var(--font-xs); color:var(--text-muted);">Uma busca por vez. Resultados alimentam a Pipeline automaticamente.</span>
+              
+              <label class="toggle-label" style="margin-left: auto; font-size: var(--font-xs); padding: 4px 8px; background: var(--surface-300); border-radius: 6px;">
+                <input type="checkbox" id="disc-test-mode">
+                <span style="margin-left: 6px;">Modo Teste (Simular 2 zonas)</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Status da Busca em Andamento -->
+          <div id="disc-search-status" class="card hidden" style="margin-bottom:var(--space-6); padding:var(--space-5); border-left:4px solid var(--primary-500); background:rgba(244,112,1,0.04);">
+            <div style="display:flex; align-items:center; gap:var(--space-3);">
+              <div class="btn-loader" style="display:inline-block;"></div>
+              <span id="disc-search-status-text" style="font-weight:600; color:var(--text-primary);">Buscando...</span>
+            </div>
+          </div>
+
+          <!-- Resultado da Busca -->
+          <div id="disc-result" class="card hidden" style="margin-bottom:var(--space-6); padding:var(--space-5); border-left:4px solid var(--success-500); background:rgba(81,207,102,0.04);">
+            <h4 style="font-weight:700; margin-bottom:var(--space-4);">✅ Resultado da Busca</h4>
+            <div id="disc-result-body"></div>
+          </div>
+
+          <!-- KPIs do Ciclo -->
+          <div class="card" style="margin-bottom: var(--space-6); padding: var(--space-5);">
+            <h4 style="font-weight:700; margin-bottom:var(--space-4);">📊 KPIs do Ciclo Atual</h4>
+            <div class="kpi-grid" style="grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));">
+              <div class="kpi-card">
+                <div class="kpi-icon">🔎</div>
+                <div class="kpi-info">
+                  <span class="kpi-label">Encontradas</span>
+                  <span id="disc-kpi-found" class="kpi-value">0</span>
+                </div>
+              </div>
+              <div class="kpi-card">
+                <div class="kpi-icon" style="color:var(--success-500);">✅</div>
+                <div class="kpi-info">
+                  <span class="kpi-label">Válidas</span>
+                  <span id="disc-kpi-valid" class="kpi-value">0</span>
+                </div>
+              </div>
+              <div class="kpi-card">
+                <div class="kpi-icon" style="color:var(--warning-500);">🔁</div>
+                <div class="kpi-info">
+                  <span class="kpi-label">Duplicatas</span>
+                  <span id="disc-kpi-duplicates" class="kpi-value">0</span>
+                </div>
+              </div>
+              <div class="kpi-card">
+                <div class="kpi-icon" style="color:var(--primary-500);">🎟️</div>
+                <div class="kpi-info">
+                  <span class="kpi-label">Créditos Usados</span>
+                  <span id="disc-kpi-credits" class="kpi-value">0</span>
+                </div>
+              </div>
+              <div class="kpi-card">
+                <div class="kpi-icon" style="color:var(--success-600);">📈</div>
+                <div class="kpi-info">
+                  <span class="kpi-label">Aproveitamento</span>
+                  <span id="disc-kpi-rate" class="kpi-value">0%</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Histórico de Buscas -->
+          <div class="card" style="padding:0; overflow:hidden;">
+            <div style="padding:var(--space-4) var(--space-5); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:var(--space-2); border-bottom:1px solid var(--surface-300);">
+              <label style="display:flex; align-items:center; gap:var(--space-2); font-size:var(--font-sm); color:var(--text-secondary); cursor:pointer;">
+                <input type="checkbox" id="disc-check-all" title="Selecionar todos">
+                Selecionar todas
+              </label>
+              <div style="display:flex; gap:var(--space-2);">
+                <button type="button" id="disc-btn-delete-selected" class="btn btn-ghost btn-sm" style="font-size:var(--font-xs); color:var(--error-500);" disabled>🗑️ Excluir Selecionados</button>
+                <button type="button" id="disc-btn-clear-history" class="btn btn-ghost btn-sm" style="font-size:var(--font-xs); color:var(--error-500);">🗑️ Limpar Histórico</button>
+              </div>
+            </div>
+            <div style="overflow-x:auto; width:100%;">
+              <table style="width:100%; border-collapse:collapse; margin-bottom:0;">
+                <thead>
+                  <tr style="text-align:left; border-bottom:1px solid var(--surface-300); background:rgba(0,0,0,0.02);">
+                    <th style="padding:var(--space-3) var(--space-4); width:40px; text-align:center;"></th>
+                    <th style="padding:var(--space-3) var(--space-4); color:var(--text-secondary); font-weight:600;">Segmento</th>
+                    <th style="padding:var(--space-3) var(--space-4); color:var(--text-secondary); font-weight:600;">Localidade</th>
+                    <th style="padding:var(--space-3) var(--space-4); color:var(--text-secondary); font-weight:600; text-align:center;">Encontradas</th>
+                    <th style="padding:var(--space-3) var(--space-4); color:var(--text-secondary); font-weight:600; text-align:center;">Criadas</th>
+                    <th style="padding:var(--space-3) var(--space-4); color:var(--text-secondary); font-weight:600; text-align:center;">Duplicatas</th>
+                    <th style="padding:var(--space-3) var(--space-4); color:var(--text-secondary); font-weight:600; text-align:center;">Data</th>
+                  </tr>
+                </thead>
+                <tbody id="disc-history-body">
+                  <tr><td colspan="7" style="text-align:center; padding:var(--space-6); color:var(--text-muted);">Nenhuma busca realizada ainda.</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- ========== WEB DISCOVERY (FIRECRAWL) ========== -->
+
+          <!-- Créditos do Ciclo (Web Discovery) -->
+          <div class="card" style="margin-bottom: var(--space-6); padding: var(--space-5);">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:var(--space-3); margin-bottom:var(--space-4);">
+              <div style="display:flex; align-items:center; gap:var(--space-3); padding:var(--space-2) var(--space-4); background:linear-gradient(90deg, var(--warning-50) 0%, transparent 100%); border-left:4px solid var(--warning-500); border-radius:0 8px 8px 0;">
+                <span style="font-size:var(--font-2xl);">🔎</span>
+                <div>
+                  <h4 style="font-weight:800; font-size:var(--font-lg); margin:0; color:var(--text-primary);">Descoberta Web</h4>
+                  <p style="font-size:var(--font-xs); color:var(--text-muted); margin:2px 0 0 0;">Busque oportunidades em websites, blogs e diretórios web por palavras-chave</p>
+                </div>
+              </div>
+              <div style="text-align:right;">
+                <span style="font-size:var(--font-2xl); font-weight:800; color:var(--primary-500);" id="webdisc-credits-used">0</span>
+                <span style="font-size:var(--font-sm); color:var(--text-muted);"> / <span id="webdisc-credits-limit">20</span></span>
+                <div style="font-size:var(--font-xs); color:var(--text-muted); margin-top:2px;">Análises Web · Renova em <strong id="webdisc-credits-reset">—</strong></div>
+              </div>
+            </div>
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:var(--space-2); margin-bottom:var(--space-2);">
+              <div style="background:var(--surface-300); border-radius:6px; height:10px; flex:1; overflow:hidden;">
+                <div id="webdisc-credits-bar" style="background:var(--primary-500); height:100%; width:0%; transition:width 0.4s ease-out; border-radius:6px;"></div>
+              </div>
+              <div style="font-size:var(--font-xs); color:var(--text-muted); white-space:nowrap;">
+                Oportunidades: <strong id="webdisc-analysis-used">0</strong> / <span id="webdisc-analysis-limit">80</span>
+                <span style="margin-left:8px; font-size:10px; background:var(--surface-200); padding:2px 6px; border-radius:4px;">3 créditos/auditoria</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Formulário de Busca Web -->
+          <div class="card" style="margin-bottom: var(--space-6); padding: var(--space-5);">
+            <h4 style="font-weight:700; margin-bottom:var(--space-4);">🔎 Buscar na Web</h4>
+            <div class="filter-group" style="flex-wrap:wrap;">
+              <div style="flex:2; min-width:250px;">
+                <label class="form-label" for="webdisc-keywords">Palavras-chave (uma por linha)</label>
+                <textarea id="webdisc-keywords" class="form-input" rows="4" placeholder="clínica médica em São Paulo&#10;consultório odontológico&#10;barbearia masculina" style="resize: vertical; min-height: 80px; font-family: var(--font-family);"></textarea>
+              </div>
+              <div style="flex:1; min-width:200px;">
+                <label class="form-label" for="webdisc-source">Fonte vinculada (opcional)</label>
+                <select id="webdisc-source" class="form-select">
+                  <option value="">Sem fonte (busca avulsa)</option>
+                </select>
+              </div>
+            </div>
+            <div class="filter-group" style="flex-wrap:wrap; margin-top:var(--space-3);">
+              <div style="flex:1; min-width:200px;">
+                <label class="form-label" for="webdisc-include-domains">Incluir domínios (opcional, vírgula)</label>
+                <input type="text" id="webdisc-include-domains" class="form-input" placeholder="ex: exemplo.com.br, site.com">
+              </div>
+              <div style="flex:1; min-width:200px;">
+                <label class="form-label" for="webdisc-exclude-domains">Excluir domínios (opcional, vírgula)</label>
+                <input type="text" id="webdisc-exclude-domains" class="form-input" placeholder="ex: wikipedia.org, rede-social.com">
+              </div>
+            </div>
+            <div style="margin-top:var(--space-4); display:flex; gap:var(--space-3); align-items:center; flex-wrap:wrap;">
+              <button type="button" id="webdisc-btn-search" class="btn btn-primary" style="min-width:200px;">
+                <span class="btn-text">🔎 Iniciar Descoberta Web</span>
+                <span class="btn-loader hidden"></span>
+              </button>
+              <span style="font-size:var(--font-xs); color:var(--text-muted);">Uma busca por vez. Resultados alimentam a Pipeline automaticamente.</span>
+              <label class="toggle-label" style="margin-left: auto; font-size: var(--font-xs); padding: 4px 8px; background: var(--surface-300); border-radius: 6px;">
+                <input type="checkbox" id="webdisc-test-mode">
+                <span style="margin-left: 6px;">Modo Teste</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Status da Busca -->
+          <div id="webdisc-search-status" class="card hidden" style="margin-bottom:var(--space-6); padding:var(--space-5); border-left:4px solid var(--primary-500); background:rgba(244,112,1,0.04);">
+            <div style="display:flex; align-items:center; gap:var(--space-3);">
+              <div class="btn-loader" style="display:inline-block;"></div>
+              <span id="webdisc-search-status-text" style="font-weight:600; color:var(--text-primary);">Buscando...</span>
+            </div>
+          </div>
+
+          <!-- Resultado -->
+          <div id="webdisc-result" class="card hidden" style="margin-bottom:var(--space-6); padding:var(--space-5); border-left:4px solid var(--success-500); background:rgba(81,207,102,0.04);">
+            <h4 style="font-weight:700; margin-bottom:var(--space-4);">✅ Resultado da Busca Web</h4>
+            <div id="webdisc-result-body"></div>
+          </div>
+
+          <!-- KPIs Web Discovery -->
+          <div class="card" style="margin-bottom: var(--space-6); padding: var(--space-5);">
+            <h4 style="font-weight:700; margin-bottom:var(--space-4);">📊 KPIs da Descoberta Web</h4>
+            <div class="kpi-grid" style="grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));">
+              <div class="kpi-card">
+                <div class="kpi-icon">🔎</div>
+                <div class="kpi-info">
+                  <span class="kpi-label">Encontradas</span>
+                  <span id="webdisc-kpi-found" class="kpi-value">0</span>
+                </div>
+              </div>
+              <div class="kpi-card">
+                <div class="kpi-icon" style="color:var(--success-500);">✅</div>
+                <div class="kpi-info">
+                  <span class="kpi-label">Válidas</span>
+                  <span id="webdisc-kpi-valid" class="kpi-value">0</span>
+                </div>
+              </div>
+              <div class="kpi-card">
+                <div class="kpi-icon" style="color:var(--warning-500);">🔁</div>
+                <div class="kpi-info">
+                  <span class="kpi-label">Duplicatas</span>
+                  <span id="webdisc-kpi-duplicates" class="kpi-value">0</span>
+                </div>
+              </div>
+              <div class="kpi-card">
+                <div class="kpi-icon" style="color:var(--success-600);">📈</div>
+                <div class="kpi-info">
+                  <span class="kpi-label">Aproveitamento</span>
+                  <span id="webdisc-kpi-rate" class="kpi-value">0%</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Histórico de Buscas Web -->
+          <div class="card" style="padding:0; overflow:hidden;">
+            <div style="padding:var(--space-4) var(--space-5); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:var(--space-2); border-bottom:1px solid var(--surface-300);">
+              <label style="display:flex; align-items:center; gap:var(--space-2); font-size:var(--font-sm); color:var(--text-secondary); cursor:pointer;">
+                <input type="checkbox" id="webdisc-check-all" title="Selecionar todos">
+                Selecionar todas
+              </label>
+              <div style="display:flex; gap:var(--space-2);">
+                <button type="button" id="webdisc-btn-delete-selected" class="btn btn-ghost btn-sm" style="font-size:var(--font-xs); color:var(--error-500);" disabled>🗑️ Excluir Selecionados</button>
+                <button type="button" id="webdisc-btn-clear-history" class="btn btn-ghost btn-sm" style="font-size:var(--font-xs); color:var(--error-500);">🗑️ Limpar Histórico</button>
+              </div>
+            </div>
+            <div style="overflow-x:auto; width:100%;">
+              <table style="width:100%; border-collapse:collapse; margin-bottom:0;">
+                <thead>
+                  <tr style="text-align:left; border-bottom:1px solid var(--surface-300); background:rgba(0,0,0,0.02);">
+                    <th style="padding:var(--space-3) var(--space-4); width:40px; text-align:center;"></th>
+                    <th style="padding:var(--space-3) var(--space-4); color:var(--text-secondary); font-weight:600;">Palavras-chave</th>
+                    <th style="padding:var(--space-3) var(--space-4); color:var(--text-secondary); font-weight:600; text-align:center;">Encontradas</th>
+                    <th style="padding:var(--space-3) var(--space-4); color:var(--text-secondary); font-weight:600; text-align:center;">Criadas</th>
+                    <th style="padding:var(--space-3) var(--space-4); color:var(--text-secondary); font-weight:600; text-align:center;">Duplicatas</th>
+                    <th style="padding:var(--space-3) var(--space-4); color:var(--text-secondary); font-weight:600; text-align:center;">Data</th>
+                  </tr>
+                </thead>
+                <tbody id="webdisc-history-body">
+                  <tr><td colspan="6" style="text-align:center; padding:var(--space-6); color:var(--text-muted);">Nenhuma busca web realizada ainda.</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ========== PÁGINA: CONFIGURAÇÕES ========== -->
+        <section id="page-settings" class="page">
+          <div class="page-header">
+            <h3 class="section-title">Configurações Gerais</h3>
+          </div>
+
+          <!-- Abas de Configurações -->
+          <div class="settings-tabs">
+            <button type="button" class="tab-btn active" data-tab="tab-settings-company">Empresa</button>
+            <button type="button" class="tab-btn" data-tab="tab-settings-profile">Perfil</button>
+            <button type="button" class="tab-btn" data-tab="tab-settings-comm">Comunicação</button>
+            <button type="button" class="tab-btn" data-tab="tab-settings-subscription">Assinatura</button>
+          </div>
+
+          <!-- Tab: Empresa -->
+          <div id="tab-settings-company" class="tab-content active">
+            <form id="tenant-form" class="settings-form" novalidate>
+              <div class="form-group">
+                <label class="form-label" for="tenant-name">Nome da Empresa</label>
+                <input type="text" id="tenant-name" class="form-input" placeholder="Minha Empresa S/A" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="tenant-email">E-mail Principal</label>
+                <input type="email" id="tenant-email" class="form-input" readonly disabled>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="tenant-plan">Plano de Assinatura</label>
+                <input type="text" id="tenant-plan" class="form-input" readonly disabled>
+              </div>
+              <button type="submit" class="btn btn-primary">Salvar Alterações</button>
+            </form>
+          </div>
+
+          <!-- Tab: Perfil -->
+          <div id="tab-settings-profile" class="tab-content">
+            <form id="profile-form" class="settings-form" novalidate>
+              <div class="form-group">
+                <label class="form-label" for="profile-name">Seu Nome</label>
+                <input type="text" id="profile-name" class="form-input" placeholder="Hamilton Viana" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="profile-email">Seu E-mail de Acesso</label>
+                <input type="email" id="profile-email" class="form-input" readonly disabled>
+              </div>
+              <button type="submit" class="btn btn-primary">Salvar Perfil</button>
+            </form>
+          </div>
+
+          <!-- Tab: Comunicação -->
+          <div id="tab-settings-comm" class="tab-content">
+            <form id="communication-form" class="settings-form" novalidate style="max-width: 540px;">
+              <h4 style="margin-bottom: var(--space-4); font-weight: 700;">Canais de Prospecção</h4>
+              
+              <div class="form-group">
+                <label class="toggle-label" style="margin-bottom: var(--space-3);">
+                  <input type="checkbox" id="comm-email-enabled" checked>
+                  <span>Habilitar Disparos de E-mail SMTP</span>
+                </label>
+                <label class="toggle-label">
+                  <input type="checkbox" id="comm-whatsapp-enabled" checked>
+                  <span>Habilitar Disparos de WhatsApp</span>
+                </label>
+              </div>
+
+              <h4 style="margin: var(--space-6) 0 var(--space-4) 0; font-weight: 700;">Horário Silencioso</h4>
+              <p style="font-size: var(--font-xs); color: var(--text-muted); margin-bottom: var(--space-4);">
+                O Dispatcher ficará proibido de prospectar no período configurado abaixo para preservar a privacidade do lead.
+              </p>
+              
+              <div class="form-group" style="display: flex; gap: var(--space-4);">
+                <div style="flex: 1;">
+                  <label class="form-label" for="comm-quiet-start">Início do Silêncio</label>
+                  <input type="time" id="comm-quiet-start" class="form-input" value="22:00">
+                </div>
+                <div style="flex: 1;">
+                  <label class="form-label" for="comm-quiet-end">Fim do Silêncio</label>
+                  <input type="time" id="comm-quiet-end" class="form-input" value="08:00">
+                </div>
+              </div>
+
+              <button type="submit" class="btn btn-primary" style="margin-bottom: var(--space-8);">
+                Salvar Regras de Comunicação
+              </button>
+            </form>
+
+            <!-- Conectar WhatsApp -->
+            <div class="card" style="max-width: 540px;">
+              <h4 style="margin-bottom: var(--space-2); font-weight: 700;">Conectar WhatsApp Operacional</h4>
+              <p style="font-size: var(--font-xs); color: var(--text-muted); margin-bottom: var(--space-5);">
+                Conecte seu celular corporativo via código de pareamento para permitir a prospecção ativa via WhatsApp.
+              </p>
+
+              <!-- Estado: Desconectado -->
+              <div id="wa-state-disconnected" class="wa-state">
+                <form id="wa-connect-form" novalidate>
+                  <div class="form-group">
+                    <label class="form-label" for="wa-phone-number">Telefone WhatsApp (com DDD)</label>
+                    <input type="tel" id="wa-phone-number" class="form-input" placeholder="Ex: 11999999999" required>
+                  </div>
+                  <div style="display: flex; gap: var(--space-3); flex-wrap: wrap; margin-top: var(--space-4);">
+                    <button type="submit" id="wa-btn-generate" class="btn btn-primary" style="flex: 1; min-width: 160px;">
+                      <span class="btn-text">Conectar via Código</span>
+                      <span class="btn-loader hidden"></span>
+                    </button>
+                    <button type="button" id="wa-btn-direct-save" class="btn btn-secondary" style="flex: 1; min-width: 160px;">
+                      <span class="btn-text">Registrar Diretamente</span>
+                      <span class="btn-loader hidden"></span>
+                    </button>
+                  </div>
+                </form>
+              </div>
+
+              <!-- Estado: Código Gerado (Pareamento) -->
+              <div id="wa-state-pairing" class="wa-state hidden">
+                <div style="text-align: center; padding: var(--space-4) 0;">
+                  <p style="font-size: var(--font-sm); font-weight: 600; margin-bottom: var(--space-3);">
+                    Vá em Dispositivos Conectados > Conectar com Código de Telefone no seu WhatsApp e digite o código abaixo:
+                  </p>
+                  <div id="wa-pairing-code" style="font-size: 2.2rem; font-weight: 800; letter-spacing: 4px; color: var(--primary-500); background: var(--surface-300); padding: var(--space-4); border-radius: var(--radius-md); display: inline-block; margin-bottom: var(--space-5);">
+                    -
+                  </div>
+                  <div style="display: flex; gap: var(--space-3); justify-content: center;">
+                    <button type="button" id="wa-btn-cancel" class="btn btn-ghost">Cancelar</button>
+                    <button type="button" id="wa-btn-done" class="btn btn-primary">Já inseri o código</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Estado: Conectado -->
+              <div id="wa-state-connected" class="wa-state hidden">
+                <div style="display: flex; align-items: center; justify-content: space-between; background: rgba(81, 207, 102, 0.1); border: 1px solid var(--success-400); padding: var(--space-4); border-radius: var(--radius-md);">
+                  <div>
+                    <span style="font-size: var(--font-sm); font-weight: 600; color: var(--success-600); display: block;">
+                      ✓ WhatsApp Conectado
+                    </span>
+                    <span id="wa-connected-phone" style="font-size: var(--font-xs); color: var(--text-secondary);"></span>
+                  </div>
+                  <button type="button" id="wa-btn-disconnect" class="btn btn-danger btn-sm">Desconectar</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tab: Assinatura -->
+          <div id="tab-settings-subscription" class="tab-content">
+            <div style="max-width: 540px;">
+              <h4 style="margin-bottom: var(--space-4); font-weight: 700;">Seu Plano</h4>
+              
+              <div id="sub-current-card" class="card" style="margin-bottom: var(--space-4); padding: var(--space-5); border-left: 4px solid var(--primary-500);">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: var(--space-3);">
+                  <div>
+                    <span style="font-size: var(--font-sm); color: var(--text-muted);">Plano Atual</span>
+                    <h3 id="sub-current-plan" style="font-weight: 800; font-size: var(--font-xl); margin: 0;">Free</h3>
+                  </div>
+                  <div style="text-align: right;">
+                    <span style="font-size: var(--font-sm); color: var(--text-muted);">Status</span>
+                    <p id="sub-current-status" style="font-weight: 600; margin: 0;">Não assinado</p>
+                  </div>
+                </div>
+              </div>
+
+              <h4 style="margin: var(--space-6) 0 var(--space-4) 0; font-weight: 700;">Planos Disponíveis</h4>
+              <p style="font-size: var(--font-sm); color: var(--text-muted); margin-bottom: var(--space-4);">
+                Escolha o plano que melhor se encaixa no seu negócio. Cobrança mensal via Asaas.
+              </p>
+
+              <div style="display: grid; gap: var(--space-4);">
+                <div class="card" style="padding: var(--space-5); border: 2px solid var(--primary-500); position: relative;">
+                  <div style="position: absolute; top: -12px; right: 16px; background: var(--primary-500); color: #fff; padding: 2px 12px; border-radius: 20px; font-size: var(--font-xs); font-weight: 700;">Popular</div>
+                  <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: var(--space-3); margin-bottom: var(--space-3);">
+                    <div>
+                      <h3 style="font-weight: 800; font-size: var(--font-lg); margin: 0;">Starter</h3>
+                      <p style="font-size: var(--font-sm); color: var(--text-muted); margin: 0;">Ideal para quem está começando</p>
+                    </div>
+                    <div style="text-align: right;">
+                      <span style="font-size: var(--font-2xl); font-weight: 800; color: var(--primary-500);">R$ 59</span>
+                      <span style="font-size: var(--font-sm); color: var(--text-muted);">/mês</span>
+                    </div>
+                  </div>
+                  <ul style="font-size: var(--font-sm); color: var(--text-secondary); margin: 0; padding-left: var(--space-4); margin-bottom: var(--space-4);">
+                    <li>80 oportunidades/mês</li>
+                    <li>20 análises web/mês</li>
+                    <li>Descoberta Google Maps</li>
+                    <li>Descoberta Web (Firecrawl)</li>
+                    <li>Campanhas WhatsApp + Email</li>
+                  </ul>
+                  <button type="button" class="btn btn-primary btn-full sub-btn" data-plan="starter">Assinar Starter</button>
+                </div>
+
+                <div class="card" style="padding: var(--space-5); border: 1px solid var(--surface-300);">
+                  <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: var(--space-3); margin-bottom: var(--space-3);">
+                    <div>
+                      <h3 style="font-weight: 800; font-size: var(--font-lg); margin: 0;">Pro</h3>
+                      <p style="font-size: var(--font-sm); color: var(--text-muted); margin: 0;">Para negócios em crescimento</p>
+                    </div>
+                    <div style="text-align: right;">
+                      <span style="font-size: var(--font-2xl); font-weight: 800;">R$ 97</span>
+                      <span style="font-size: var(--font-sm); color: var(--text-muted);">/mês</span>
+                    </div>
+                  </div>
+                  <ul style="font-size: var(--font-sm); color: var(--text-secondary); margin: 0; padding-left: var(--space-4); margin-bottom: var(--space-4);">
+                    <li>300 oportunidades/mês</li>
+                    <li>50 análises web/mês</li>
+                    <li>Tudo do Starter</li>
+                    <li>Múltiplas fontes</li>
+                    <li>Prioridade na fila</li>
+                  </ul>
+                  <button type="button" class="btn btn-secondary btn-full sub-btn" data-plan="pro">Assinar Pro</button>
+                </div>
+              </div>
+
+              <div id="sub-status-msg" class="hidden" style="margin-top: var(--space-4); padding: var(--space-3); background: rgba(244,112,1,0.08); border: 1px solid var(--warning-400); border-radius: var(--radius-md); font-size: var(--font-sm);">
+                <span id="sub-status-text"></span>
+              </div>
+            </div>
+          </div>
+
+        </section>
+
+        <!-- ========== PÁGINA: CONVERSAS (CHAT) ========== -->
+        <section id="page-conversations" class="page">
+          <div style="display: grid; grid-template-columns: 320px 1fr; gap: var(--space-4); height: calc(100vh - 160px); min-height: 500px; background: var(--surface-50); border-radius: var(--radius-lg); border: 1px solid var(--surface-200); overflow: hidden;">
+            
+            <!-- Lista de Conversas (Esquerda) -->
+            <div style="display: flex; flex-direction: column; border-right: 1px solid var(--surface-200); background: #fff;">
+              <div style="padding: var(--space-4); border-bottom: 1px solid var(--surface-100); display: flex; justify-content: space-between; align-items: center;">
+                <h3 style="font-weight: 700; margin: 0; font-size: var(--font-md);">Mensagens</h3>
+                <button type="button" id="btn-refresh-conversations" class="btn btn-secondary btn-sm" style="padding: 4px var(--space-2);">🔄 Atualizar</button>
+              </div>
+              <div id="conversations-list-container" style="flex: 1; overflow-y: auto; padding: var(--space-2);">
+                <!-- Lista de itens de conversa inseridos dinamicamente -->
+                <div style="text-align: center; color: var(--text-muted); padding: var(--space-5); font-size: var(--font-sm);">
+                  Carregando conversas...
+                </div>
+              </div>
+            </div>
+
+            <!-- Área de Conversa Ativa (Direita) -->
+            <div id="chat-window-container" style="display: flex; flex-direction: column; background: var(--surface-50);">
+              <!-- Chat Vazio State -->
+              <div id="chat-empty-state" style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: var(--space-6); color: var(--text-muted);">
+                <div style="font-size: 48px; margin-bottom: var(--space-3);">💬</div>
+                <h4 style="font-weight: 700; margin: 0 0 var(--space-2) 0;">Nenhuma conversa selecionada</h4>
+                <p style="font-size: var(--font-sm); margin: 0; max-width: 320px;">Selecione um lead na lista lateral para visualizar o histórico de mensagens e interagir.</p>
+              </div>
+
+              <!-- Chat Ativo (Header, Mensagens e Envio) -->
+              <div id="chat-active-state" class="hidden" style="flex: 1; display: flex; flex-direction: column; height: 100%;">
+                <!-- Chat Header -->
+                <div style="padding: var(--space-3) var(--space-4); background: #fff; border-bottom: 1px solid var(--surface-200); display: flex; align-items: center; justify-content: space-between;">
+                  <div>
+                    <h4 id="chat-lead-name" style="font-weight: 700; margin: 0; font-size: var(--font-md);">Nome do Lead</h4>
+                    <span id="chat-lead-company" style="font-size: var(--font-xs); color: var(--text-secondary);">Nome da Empresa</span>
+                  </div>
+                  <div style="display: flex; gap: var(--space-2); align-items: center;">
+                    <span id="chat-status-badge" class="badge">Ativa</span>
+                  </div>
+                </div>
+
+                <!-- Lista de Mensagens -->
+                <div id="chat-messages-container" style="flex: 1; overflow-y: auto; padding: var(--space-4); display: flex; flex-direction: column; gap: var(--space-3);">
+                  <!-- Mensagens do chat serão inseridas aqui dinamicamente -->
+                </div>
+
+                <!-- Input de Envio de Mensagem -->
+                <form id="chat-send-form" style="padding: var(--space-3) var(--space-4); background: #fff; border-top: 1px solid var(--surface-200); display: flex; gap: var(--space-3); align-items: center;" novalidate>
+                  <input type="text" id="chat-message-input" class="form-input" placeholder="Digite uma mensagem rápida para enviar pelo WhatsApp..." style="flex: 1; margin: 0;" required>
+                  <button type="submit" class="btn btn-primary" style="padding: 10px 20px;">
+                    <span class="btn-text">Enviar</span>
+                  </button>
+                </form>
+              </div>
+
+            </div>
+
+          </div>
+        </section>
+
+        <div id="modal-campaign-msg" class="modal hidden">
+          <div class="modal-overlay"></div>
+          <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+              <h3>Editar & Aprovar Campanha</h3>
+              <button type="button" class="modal-close" id="close-camp-msg">&times;</button>
+            </div>
+            <form id="campaign-msg-form" class="modal-body" novalidate>
+              <input type="hidden" id="camp-msg-id">
+              
+              <!-- Abas da Cadência de Passos -->
+              <div id="camp-msg-tabs-container" class="hidden" style="margin-bottom: var(--space-4);">
+                <label class="form-label" style="font-weight: 600; display: block; margin-bottom: var(--space-2);">Sequência de Envio (Cadência)</label>
+                <div class="tabs-header" id="camp-msg-tabs-header" style="display: flex; gap: var(--space-2); border-bottom: 1px solid var(--surface-300); padding-bottom: var(--space-2); flex-wrap: wrap;">
+                  <!-- Botões das abas serão inseridos aqui dinamicamente -->
+                </div>
+              </div>
+
+              <div class="form-group" id="camp-msg-subject-group">
+                <label class="form-label" for="camp-msg-subject">Assunto (Apenas para E-mail)</label>
+                <input type="text" id="camp-msg-subject" class="form-input" placeholder="Digite o assunto do e-mail...">
+              </div>
+              
+              <div class="form-group">
+                <label class="form-label" for="camp-msg-body">Mensagem da Campanha</label>
+                <textarea id="camp-msg-body" class="form-textarea" style="height: 250px;" placeholder="Escreva ou edite a mensagem da campanha aqui..."></textarea>
+              </div>
+
+              <!-- Modo Teste -->
+              <div class="form-group" style="border-top: 1px solid var(--surface-300); padding-top: var(--space-4); margin-top: var(--space-2);">
+                <label class="toggle-label" style="font-weight: 600; margin-bottom: var(--space-3);">
+                  <input type="checkbox" id="camp-test-mode">
+                  <span>🧪 Modo Teste — enviar para meus dados em vez do lead real</span>
+                </label>
+                <div id="camp-test-fields" class="hidden" style="display: flex; gap: var(--space-3); flex-wrap: wrap; margin-top: var(--space-2);">
+                  <div style="flex: 1; min-width: 200px;">
+                    <label class="form-label" for="camp-test-email">E-mail de Teste</label>
+                    <input type="email" id="camp-test-email" class="form-input" placeholder="teste@meuemail.com">
+                  </div>
+                  <div style="flex: 1; min-width: 200px;">
+                    <label class="form-label" for="camp-test-phone">Telefone de Teste</label>
+                    <input type="text" id="camp-test-phone" class="form-input" placeholder="11999999999">
+                  </div>
+                </div>
+              </div>
+              
+              <div class="modal-footer" style="display: flex; gap: var(--space-2); justify-content: flex-end; flex-wrap: wrap; align-items: center; width: 100%;">
+                <button type="button" class="btn btn-ghost" style="color: var(--danger-color); margin-right: auto; padding: var(--space-2) var(--space-3);" id="btn-delete-camp">Excluir</button>
+                <button type="button" class="btn btn-ghost" id="btn-close-camp-msg">Fechar</button>
+                <button type="button" class="btn btn-secondary" id="btn-save-draft-camp">Salvar Rascunho</button>
+                <button type="button" class="btn btn-primary" id="btn-approve-camp">Aprovar Campanha</button>
+                <button type="button" class="btn btn-primary hidden" id="btn-send-camp" style="background: var(--success-600); border-color: var(--success-600);">🚀 Enviar Agora</button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- Toast Global -->
+  <div id="global-toast" class="toast hidden"></div>
+
+  <!-- ========================================== -->
+  <!-- TELA DE ONBOARDING (CONFIGURAÇÃO INICIAL) -->
+  <!-- ========================================== -->
+  <div id="onboarding-screen" class="screen onboarding-screen">
+    <div class="onboarding-container">
+      <div class="onboarding-header">
+        <h2 id="onboarding-main-title" class="onboarding-title">Boas-vindas ao HUVI!</h2>
+        <p class="onboarding-subtitle">Vamos deixar tudo pronto para você começar a vender</p>
+      </div>
+
+      <!-- Indicador de Etapas -->
+      <div class="onboarding-steps">
+        <div class="onboarding-step-dot active" data-step="1">1</div>
+        <div class="onboarding-step-dot" data-step="2">2</div>
+      </div>
+
+      <!-- Formulário do Onboarding -->
+      <form id="onboarding-form" novalidate>
+        
+        <!-- ETAPA 1: BOAS VINDAS -->
+        <div class="onboarding-step-content active" data-step="1">
+          <div style="text-align: center; padding: var(--space-4) 0;">
+            <div style="font-size: 64px; margin-bottom: var(--space-4);">🚀</div>
+            <h3 style="font-weight: 700; font-size: var(--font-lg); margin-bottom: var(--space-3); color: var(--text-primary);">Pronto para decolar suas vendas?</h3>
+            <p style="color: var(--text-secondary); line-height: 1.6; margin-bottom: var(--space-6);">
+              O HUVI é a sua central inteligente de prospecção e conversão. Vamos cadastrar sua primeira oferta para começar. Tudo de forma simples e rápida!
+            </p>
+            <button type="button" class="btn btn-primary btn-full next-step-btn">Começar Configuração</button>
+          </div>
+        </div>
+
+        <!-- ETAPA 2: CADASTRAR PRIMEIRA OFERTA -->
+        <div class="onboarding-step-content" data-step="2">
+          <h3 style="font-weight: 700; font-size: var(--font-lg); margin-bottom: var(--space-2); color: var(--text-primary);">Cadastre sua Primeira Oferta</h3>
+          <p style="color: var(--text-muted); font-size: var(--font-sm); margin-bottom: var(--space-5);">O que você deseja vender? Nossa IA usará isso para criar as campanhas de vendas.</p>
+
+          <div class="form-group">
+            <label class="form-label" for="onb-offer-name">Nome do Produto ou Serviço (Obrigatório)</label>
+            <input type="text" id="onb-offer-name" class="form-input" placeholder="Ex: Consultoria Comercial de Vendas" required>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="onb-offer-description">Descrição (Obrigatório)</label>
+            <textarea id="onb-offer-description" class="form-textarea" placeholder="Descreva o que está incluso no seu serviço, os principais benefícios e diferenciais..." rows="3" required></textarea>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="onb-offer-price">Preço sugerido (R$ - Opcional)</label>
+            <input type="text" id="onb-offer-price" class="form-input" placeholder="1500,00">
+          </div>
+
+          <div style="margin-top: var(--space-6); display: flex; gap: var(--space-3); justify-content: flex-end;">
+            <button type="submit" id="btn-onb-finish" class="btn btn-primary btn-full">
+              <span class="btn-text">Finalizar Configuração e Acessar Painel 🚀</span>
+              <span class="btn-loader hidden"></span>
+            </button>
+          </div>
+        </div>
+
+      </form>
+    </div>
+  </div>
+
+  <!-- Scripts Externos -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18"></script>
+
+  <!-- Scripts HUVI -->
+  <script src="js/config.js?v=1.7"></script>
+  <script src="js/supabase-client.js?v=1.7"></script>
+  <script src="js/auth.js?v=1.8"></script>
+  <script src="js/router.js?v=1.7"></script>
+  <script src="js/dashboard.js?v=1.7"></script>
+  <script src="js/offers.js?v=1.9"></script>
+  <script src="js/import-leads.js?v=1.7"></script>
+  <script src="js/sources.js?v=1.7"></script>
+  <script src="js/municipios.js?v=1.7"></script>
+  <script src="js/opportunities.js?v=2.0"></script>
+  <script src="js/campaigns.js?v=1.9"></script>
+  <script src="js/conversions.js?v=1.7"></script>
+  <script src="js/conversations.js?v=1.0"></script>
+  <script src="js/discovery.js?v=1.9"></script>
+  <script src="js/web-discovery.js?v=1.3"></script>
+  <script src="js/settings.js?v=1.7"></script>
+  <script src="js/onboarding.js?v=1.1"></script>
+  <script src="js/app.js?v=1.9"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js').catch(function(err) {
+        console.warn('[HUVI] Service Worker registration failed:', err);
+      });
+    }
+  </script>
+</body>
+</html>

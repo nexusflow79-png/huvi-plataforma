@@ -1,0 +1,526 @@
+{
+  "name": "HUVI_Dispatcher",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "huvi-dispatcher",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "id": "Webhook",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        100,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $input.first().json.body || {};\n// Suporta webhook do Supabase ou payload direto\nconst campaign = body.record || body;\n\nif (!campaign.id || !campaign.opportunity_id) {\n  throw new Error(\"ID da campanha e Opportunity ID são obrigatórios.\");\n}\n\nreturn [{\n  json: campaign\n}];"
+      },
+      "id": "ExtractCampaign",
+      "name": "ExtractCampaign",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        300,
+        240
+      ]
+    },
+    {
+      "credentials": {
+        "supabaseApi": {
+          "id": "8TEbcDMv4pFPkspM",
+          "name": "HUVIbase"
+        }
+      },
+      "id": "GetOpportunity",
+      "name": "GetOpportunity",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "opportunities",
+        "filters": {
+          "conditions": [
+            {
+              "condition": "eq",
+              "keyName": "id",
+              "keyValue": "={{ $json.opportunity_id }}"
+            }
+          ]
+        }
+      },
+      "position": [
+        500,
+        240
+      ],
+      "alwaysOutputData": true
+    },
+    {
+      "credentials": {
+        "supabaseApi": {
+          "id": "8TEbcDMv4pFPkspM",
+          "name": "HUVIbase"
+        }
+      },
+      "id": "GetTenantSettings",
+      "name": "GetTenantSettings",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "tenant_settings",
+        "filters": {
+          "conditions": [
+            {
+              "condition": "eq",
+              "keyName": "tenant_id",
+              "keyValue": "={{ $('ExtractCampaign').first().json.tenant_id }}"
+            }
+          ]
+        }
+      },
+      "position": [
+        700,
+        360
+      ],
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $input.all() || [];\nconst settingsObj = {};\ninput.forEach(item => {\n  const row = item.json;\n  if (row && row.setting_key) {\n    settingsObj[row.setting_key] = row.setting_value;\n  }\n});\nreturn [{ json: settingsObj }];"
+      },
+      "id": "FormatSettings",
+      "name": "FormatSettings",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        900,
+        360
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const campaign = $('ExtractCampaign').first().json;\nconst opp = $('GetOpportunity').first().json || {};\nlet settings = {};\ntry { settings = $('FormatSettings').first().json || {}; } catch(e) { settings = {}; }\n\n// Suporte à matriz de mensagens (cadência)\nlet subject = campaign.subject;\nlet message = campaign.message;\nlet currentStep = campaign.current_step || 1;\nlet totalSteps = 1;\nlet hasMatrix = false;\n\nif (campaign.messages_matrix) {\n  let matrix = campaign.messages_matrix;\n  if (typeof matrix === 'string') {\n    try { matrix = JSON.parse(matrix); } catch(e) { matrix = null; }\n  }\n  if (Array.isArray(matrix) && matrix.length > 0) {\n    hasMatrix = true;\n    totalSteps = matrix.length;\n    const stepData = matrix.find(m => m.step === currentStep) || matrix[currentStep - 1] || matrix[0];\n    subject = stepData.subject || campaign.subject;\n    message = stepData.message || campaign.message;\n  }\n}\n\nreturn [{\n  json: {\n    campaign_id: campaign.id,\n    channel: campaign.channel || 'whatsapp',\n    subject: subject,\n    message: message,\n    tenant_id: campaign.tenant_id,\n    opportunity_id: campaign.opportunity_id,\n    company_name: opp.company_name,\n    contact_name: opp.contact_name,\n    email: campaign.opportunities?.email || opp.email || \"\",\n    phone: campaign.opportunities?.phone || opp.phone || \"\",\n    evolution_instance: settings.evolution_instance || 'HUVI',\n    email_sender: settings.email_sender || 'contato@huvi.com.br',\n    current_step: currentStep,\n    total_steps: totalSteps,\n    has_matrix: hasMatrix\n  }\n}];"
+      },
+      "id": "MergeData",
+      "name": "MergeData",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1100,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "channel-check",
+                    "leftValue": "={{ $json.channel }}",
+                    "rightValue": "whatsapp",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "whatsapp"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "email-check",
+                    "leftValue": "={{ $json.channel }}",
+                    "rightValue": "email",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "email"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "SwitchChannel",
+      "name": "SwitchChannel",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3,
+      "position": [
+        1300,
+        240
+      ]
+    },
+    {
+      "credentials": {
+        "evolutionApi": {
+          "id": "IMWdDECSPHovAleD",
+          "name": "HUVI_Evolution_WhatsApp"
+        }
+      },
+      "id": "SendWhatsApp",
+      "name": "SendWhatsApp",
+      "type": "n8n-nodes-evolution-api.evolutionApi",
+      "typeVersion": 1,
+      "parameters": {
+        "resource": "messages-api",
+        "operation": "send-text",
+        "instanceName": "={{ $json.evolution_instance }}",
+        "remoteJid": "={{ (() => { let num = String($json.phone || '').replace(/\\D/g, ''); if (num.length > 0 && !num.startsWith('55') && (num.length === 10 || num.length === 11)) { num = '55' + num; } return num; })() }}@s.whatsapp.net",
+        "messageText": "={{ $json.message }}",
+        "options_message": {}
+      },
+      "position": [
+        1550,
+        140
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "credentials": {
+        "smtp": {
+          "id": "Z5CBLF6xcJmHZmzq",
+          "name": "HUVI_SMTP"
+        }
+      },
+      "id": "SendEmail",
+      "name": "SendEmail",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 1,
+      "parameters": {
+        "fromEmail": "={{ $json.email_sender }}",
+        "toEmail": "={{ $json.email }}",
+        "subject": "={{ $json.subject || 'Contato Comercial' }}",
+        "html": "={{ $json.message.replace(/\\n/g, '<br>') }}",
+        "options": {}
+      },
+      "position": [
+        1550,
+        340
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const prev = $input.first().json;\nconst hasError = prev.error || (prev.status && prev.status !== 200 && prev.status !== 201 && !prev.message && !prev.accepted);\nconst errorMessage = hasError ? (JSON.stringify(prev.error) || prev.message || \"Falha no envio\") : null;\nconst dispatchStatus = hasError ? 'failed' : 'sent';\n\nconst mergeInfo = $('MergeData').first().json;\n\n// Cadência: calcular próximo passo\nconst currentStep = mergeInfo.current_step || 1;\nconst totalSteps = mergeInfo.total_steps || 1;\nconst hasMatrix = mergeInfo.has_matrix || false;\nconst isLastStep = currentStep >= totalSteps;\n\n// Status da campanha: 'sent' apenas se for último passo ou erro\nlet campaignStatus;\nif (hasError) {\n  campaignStatus = 'failed';\n} else if (!hasMatrix || isLastStep) {\n  campaignStatus = 'sent';\n} else {\n  campaignStatus = 'approved';  // Mantém ativa para próximos follow-ups\n}\n\nreturn [{\n  json: {\n    tenant_id: mergeInfo.tenant_id,\n    campaign_id: mergeInfo.campaign_id,\n    opportunity_id: mergeInfo.opportunity_id,\n    channel: mergeInfo.channel,\n    status: dispatchStatus,\n    campaign_status: campaignStatus,\n    error_message: errorMessage,\n    sent_at: hasError ? null : new Date().toISOString(),\n    next_step: hasError ? currentStep : currentStep + 1,\n    has_matrix: hasMatrix,\n    is_last_step: isLastStep\n  }\n}];"
+      },
+      "id": "PrepareDispatchLog",
+      "name": "PrepareDispatchLog",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1800,
+        240
+      ]
+    },
+    {
+      "credentials": {
+        "supabaseApi": {
+          "id": "8TEbcDMv4pFPkspM",
+          "name": "HUVIbase"
+        }
+      },
+      "id": "InsertDispatch",
+      "name": "InsertDispatch",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "parameters": {
+        "operation": "create",
+        "tableId": "dispatches",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "tenant_id",
+              "fieldValue": "={{ $json.tenant_id }}"
+            },
+            {
+              "fieldId": "campaign_id",
+              "fieldValue": "={{ $json.campaign_id }}"
+            },
+            {
+              "fieldId": "opportunity_id",
+              "fieldValue": "={{ $json.opportunity_id }}"
+            },
+            {
+              "fieldId": "channel",
+              "fieldValue": "={{ $json.channel }}"
+            },
+            {
+              "fieldId": "status",
+              "fieldValue": "={{ $json.status }}"
+            },
+            {
+              "fieldId": "error_message",
+              "fieldValue": "={{ $json.error_message }}"
+            },
+            {
+              "fieldId": "sent_at",
+              "fieldValue": "={{ $json.sent_at }}"
+            }
+          ]
+        }
+      },
+      "position": [
+        2000,
+        240
+      ]
+    },
+    {
+      "credentials": {
+        "supabaseApi": {
+          "id": "8TEbcDMv4pFPkspM",
+          "name": "HUVIbase"
+        }
+      },
+      "id": "UpdateCampaignStatus",
+      "name": "UpdateCampaignStatus",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "parameters": {
+        "operation": "update",
+        "tableId": "campaigns",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "status",
+              "fieldValue": "={{ $('PrepareDispatchLog').first().json.campaign_status }}"
+            },
+            {
+              "fieldId": "current_step",
+              "fieldValue": "={{ $('PrepareDispatchLog').first().json.next_step }}"
+            },
+            {
+              "fieldId": "last_sent_at",
+              "fieldValue": "={{ $('PrepareDispatchLog').first().json.sent_at }}"
+            }
+          ]
+        },
+        "filters": {
+          "conditions": [
+            {
+              "condition": "eq",
+              "keyName": "id",
+              "keyValue": "={{ $('PrepareDispatchLog').first().json.campaign_id }}"
+            }
+          ]
+        }
+      },
+      "position": [
+        2200,
+        240
+      ]
+    },
+    {
+      "credentials": {
+        "supabaseApi": {
+          "id": "8TEbcDMv4pFPkspM",
+          "name": "HUVIbase"
+        }
+      },
+      "id": "UpdateOpportunityStatus",
+      "name": "UpdateOpportunityStatus",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "parameters": {
+        "operation": "update",
+        "tableId": "opportunities",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "status",
+              "fieldValue": "={{ $('PrepareDispatchLog').first().json.status === 'sent' ? 'contacted' : 'campaign_created' }}"
+            }
+          ]
+        },
+        "filters": {
+          "conditions": [
+            {
+              "condition": "eq",
+              "keyName": "id",
+              "keyValue": "={{ $('PrepareDispatchLog').first().json.opportunity_id }}"
+            }
+          ]
+        }
+      },
+      "position": [
+        2400,
+        240
+      ]
+    }
+  ],
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "connections": {
+    "SendWhatsApp": {
+      "main": [
+        [
+          {
+            "index": 0,
+            "node": "PrepareDispatchLog",
+            "type": "main"
+          }
+        ]
+      ]
+    },
+    "FormatSettings": {
+      "main": [
+        [
+          {
+            "index": 0,
+            "node": "MergeData",
+            "type": "main"
+          }
+        ]
+      ]
+    },
+    "UpdateCampaignStatus": {
+      "main": [
+        [
+          {
+            "index": 0,
+            "node": "UpdateOpportunityStatus",
+            "type": "main"
+          }
+        ]
+      ]
+    },
+    "InsertDispatch": {
+      "main": [
+        [
+          {
+            "index": 0,
+            "node": "UpdateCampaignStatus",
+            "type": "main"
+          }
+        ]
+      ]
+    },
+    "SwitchChannel": {
+      "main": [
+        [
+          {
+            "index": 0,
+            "node": "SendWhatsApp",
+            "type": "main"
+          }
+        ],
+        [
+          {
+            "index": 0,
+            "node": "SendEmail",
+            "type": "main"
+          }
+        ]
+      ]
+    },
+    "ExtractCampaign": {
+      "main": [
+        [
+          {
+            "index": 0,
+            "node": "GetOpportunity",
+            "type": "main"
+          }
+        ]
+      ]
+    },
+    "MergeData": {
+      "main": [
+        [
+          {
+            "index": 0,
+            "node": "SwitchChannel",
+            "type": "main"
+          }
+        ]
+      ]
+    },
+    "PrepareDispatchLog": {
+      "main": [
+        [
+          {
+            "index": 0,
+            "node": "InsertDispatch",
+            "type": "main"
+          }
+        ]
+      ]
+    },
+    "SendEmail": {
+      "main": [
+        [
+          {
+            "index": 0,
+            "node": "PrepareDispatchLog",
+            "type": "main"
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "index": 0,
+            "node": "ExtractCampaign",
+            "type": "main"
+          }
+        ]
+      ]
+    },
+    "GetTenantSettings": {
+      "main": [
+        [
+          {
+            "index": 0,
+            "node": "FormatSettings",
+            "type": "main"
+          }
+        ]
+      ]
+    },
+    "GetOpportunity": {
+      "main": [
+        [
+          {
+            "index": 0,
+            "node": "GetTenantSettings",
+            "type": "main"
+          }
+        ]
+      ]
+    }
+  }
+}

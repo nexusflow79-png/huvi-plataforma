@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
+  <defs>
+    <linearGradient id="brand" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#f37100"/>
+      <stop offset="50%" style="stop-color:#d92200"/>
+      <stop offset="100%" style="stop-color:#920004"/>
+    </linearGradient>
+  </defs>
+  <rect width="32" height="32" rx="8" fill="#0f0909"/>
+  <text x="16" y="22" text-anchor="middle" font-family="Inter,sans-serif" font-weight="800" font-size="14" fill="url(#brand)">H</text>
+</svg>

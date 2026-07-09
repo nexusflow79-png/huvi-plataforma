@@ -1,0 +1,1123 @@
+{
+  "name": "HUVI_Opportunity_Pipeline",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "huvi-opportunity-pipeline",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "Webhook",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        100,
+        400
+      ]
+    },
+    {
+      "id": "manual-trigger",
+      "name": "ManualTrigger",
+      "parameters": {},
+      "position": [
+        100,
+        240
+      ],
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1
+    },
+    {
+      "id": "schedule-trigger",
+      "name": "ScheduleTrigger",
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 1
+            }
+          ]
+        }
+      },
+      "position": [
+        100,
+        80
+      ],
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1
+    },
+    {
+      "credentials": {
+        "supabaseApi": {
+          "id": "8TEbcDMv4pFPkspM",
+          "name": "HUVIbase"
+        }
+      },
+      "id": "FetchTenantOffer",
+      "name": "FetchTenantOffer",
+      "parameters": {
+        "filters": {
+          "conditions": [
+            {
+              "condition": "eq",
+              "keyName": "active",
+              "keyValue": "true"
+            },
+            {
+              "condition": "is",
+              "keyName": "deleted_at",
+              "keyValue": "null"
+            }
+          ]
+        },
+        "limit": 1,
+        "operation": "getAll",
+        "tableId": "offers"
+      },
+      "position": [
+        280,
+        160
+      ],
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1
+    },
+    {
+      "credentials": {
+        "supabaseApi": {
+          "id": "8TEbcDMv4pFPkspM",
+          "name": "HUVIbase"
+        }
+      },
+      "id": "FetchUnprocessedOpps",
+      "name": "FetchUnprocessedOpps",
+      "parameters": {
+        "filters": {
+          "conditions": [
+            {
+              "condition": "is",
+              "keyName": "deleted_at",
+              "keyValue": "null"
+            }
+          ]
+        },
+        "operation": "getAll",
+        "tableId": "opportunities"
+      },
+      "position": [
+        460,
+        160
+      ],
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1
+    },
+    {
+      "id": "FilterOpps",
+      "name": "FilterOpps",
+      "parameters": {
+        "jsCode": "const opps = $input.all().map(e => e.json);\nlet webhookData = {};\nconst uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;\ntry {\n  webhookData = $('Webhook').first()?.json?.body || {};\n} catch (e) {}\nconst opportunityId = webhookData.opportunityId;\nconst tenantId = webhookData.tenantId;\nlet filteredOpps = [];\nif (opportunityId && uuidRegex.test(opportunityId)) {\n  filteredOpps = opps.filter(o => o.id === opportunityId);\n} else {\n  filteredOpps = opps.filter(o =>\n    (o.status === 'discovered' || o.status === 'scored') &&\n    (!tenantId || o.tenant_id === tenantId)\n  );\n}\nreturn filteredOpps.map(o => ({ json: o }));"
+      },
+      "position": [
+        460,
+        320
+      ],
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2
+    },
+    {
+      "id": "LoopOpportunities",
+      "name": "LoopOpportunities",
+      "parameters": {
+        "batchSize": 1,
+        "options": {}
+      },
+      "position": [
+        540,
+        160
+      ],
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3
+    },
+    {
+      "id": "DecisionBlock",
+      "name": "DecisionBlock",
+      "parameters": {
+        "jsCode": "const item = $input.first()?.json || {};\nconst cleanName = (item.company_name || 'empresa').toLowerCase().replace(/\\s+/g, '');\nconst shortId = (item.id || Math.random().toString(36).substring(2, 10)).slice(0, 8);\nreturn [{\n  json: {\n    ...item,\n    contact_name: item.contact_name || 'Responsavel Comercial',\n    email: item.email || 'contato+' + shortId + '@' + cleanName + '.com.br',\n    phone: item.phone || ('55119' + Math.floor(10000000 + Math.random() * 90000000)),\n    instagram: item.instagram || '@' + cleanName + '_' + shortId.slice(0, 4),\n    enriched_at: new Date().toISOString()\n  }\n}];"
+      },
+      "position": [
+        760,
+        160
+      ],
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2
+    },
+    {
+      "credentials": {
+        "supabaseApi": {
+          "id": "8TEbcDMv4pFPkspM",
+          "name": "HUVIbase"
+        }
+      },
+      "id": "SupabaseUpdateDecision",
+      "name": "SupabaseUpdateDecision",
+      "parameters": {
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "contact_name",
+              "fieldValue": "={{ $json.contact_name }}"
+            },
+            {
+              "fieldId": "email",
+              "fieldValue": "={{ $json.email }}"
+            },
+            {
+              "fieldId": "phone",
+              "fieldValue": "={{ $json.phone }}"
+            },
+            {
+              "fieldId": "instagram",
+              "fieldValue": "={{ $json.instagram }}"
+            },
+            {
+              "fieldId": "status",
+              "fieldValue": "enriched"
+            }
+          ]
+        },
+        "filters": {
+          "conditions": [
+            {
+              "condition": "eq",
+              "keyName": "id",
+              "keyValue": "={{ $json.id }}"
+            }
+          ]
+        },
+        "operation": "update",
+        "tableId": "opportunities"
+      },
+      "position": [
+        980,
+        160
+      ],
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1
+    },
+    {
+      "id": "AuditorHuviBrain",
+      "name": "AuditorHuviBrain",
+      "parameters": {
+        "sendBody": true,
+        "contentType": "json",
+        "jsonBody": "={{ JSON.stringify({ prompt: 'Faça um diagnóstico comercial resumido da empresa ' + ($json.company_name || '') + ' localizada em ' + ($json.city || '') + '/' + ($json.state || '') + ' com foco na seguinte oferta que pretendemos vender para eles: \\'' + ($('FetchTenantOffer').first().json.name || 'Consultoria de Vendas') + '\\' (Descrição da Oferta: ' + ($('FetchTenantOffer').first().json.description || 'Aumento de vendas e conversão') + '). Website: ' + ($json.website || '') + '. Instagram: ' + ($json.instagram || '') + ($json.description ? '. Descrição do Lead: ' + $json.description : '') + ($json.firecrawl_data ? '. Dados ricos coletados do site: ' + JSON.stringify($json.firecrawl_data) : '') + '. Identifique pontos fortes, pontos fracos e dê 3 recomendações comerciais alinhadas e coerentes com a oferta.', system_message: 'Você é o Auditor Comercial do HUVI. Analise os dados e retorne um diagnóstico comercial estruturado em formato JSON contendo as chaves: summary, strengths, weaknesses, recommendations.' }) }}",
+        "method": "POST",
+        "options": {},
+        "specifyBody": "json",
+        "url": "https://n8n.nexus-flow.tech/webhook/huvi-brain"
+      },
+      "position": [
+        1200,
+        160
+      ],
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1
+    },
+    {
+      "id": "ParseAudit",
+      "name": "ParseAudit",
+      "parameters": {
+        "jsCode": "const response = $input.first()?.json || {};\nlet oppRef;\ntry { oppRef = $('LoopOpportunities').first()?.json || {}; } catch(e) { oppRef = {}; }\nlet parsedData = {};\ntry {\n  let cleanText = response.text || '';\n  cleanText = cleanText.replace(/```json/gi, '').replace(/```/g, '').trim();\n  parsedData = JSON.parse(cleanText);\n} catch (e) {\n  parsedData = {\n    summary: response.text || 'Diagnostico nao disponivel.',\n    strengths: 'Identificados pontos fortes na infraestrutura local.',\n    weaknesses: 'Necessidade de maior engajamento digital.',\n    recommendations: 'Iniciar prospeccao ativa e funil de vendas.'\n  };\n}\nreturn [{\n  json: {\n    opportunity_id: oppRef.id || null,\n    tenant_id: oppRef.tenant_id || null,\n    audit_summary: parsedData.summary || parsedData.text || response.text || '',\n    strengths: typeof parsedData.strengths === 'string' ? parsedData.strengths : JSON.stringify(parsedData.strengths || []),\n    weaknesses: typeof parsedData.weaknesses === 'string' ? parsedData.weaknesses : JSON.stringify(parsedData.weaknesses || []),\n    recommendations: typeof parsedData.recommendations === 'string' ? parsedData.recommendations : JSON.stringify(parsedData.recommendations || [])\n  }\n}];"
+      },
+      "position": [
+        1420,
+        160
+      ],
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2
+    },
+    {
+      "credentials": {
+        "supabaseApi": {
+          "id": "8TEbcDMv4pFPkspM",
+          "name": "HUVIbase"
+        }
+      },
+      "id": "SupabaseInsertAudit",
+      "name": "SupabaseInsertAudit",
+      "parameters": {
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "tenant_id",
+              "fieldValue": "={{ $json.tenant_id }}"
+            },
+            {
+              "fieldId": "opportunity_id",
+              "fieldValue": "={{ $json.opportunity_id }}"
+            },
+            {
+              "fieldId": "audit_summary",
+              "fieldValue": "={{ $json.audit_summary }}"
+            },
+            {
+              "fieldId": "strengths",
+              "fieldValue": "={{ $json.strengths }}"
+            },
+            {
+              "fieldId": "weaknesses",
+              "fieldValue": "={{ $json.weaknesses }}"
+            },
+            {
+              "fieldId": "recommendations",
+              "fieldValue": "={{ $json.recommendations }}"
+            }
+          ]
+        },
+        "operation": "create",
+        "tableId": "audits"
+      },
+      "position": [
+        1640,
+        160
+      ],
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1
+    },
+    {
+      "credentials": {
+        "supabaseApi": {
+          "id": "8TEbcDMv4pFPkspM",
+          "name": "HUVIbase"
+        }
+      },
+      "id": "SupabaseUpdateAuditId",
+      "name": "SupabaseUpdateAuditId",
+      "parameters": {
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "status",
+              "fieldValue": "audited"
+            }
+          ]
+        },
+        "filters": {
+          "conditions": [
+            {
+              "condition": "eq",
+              "keyName": "id",
+              "keyValue": "={{ $json.opportunity_id }}"
+            }
+          ]
+        },
+        "operation": "update",
+        "tableId": "opportunities"
+      },
+      "position": [
+        1860,
+        160
+      ],
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1
+    },
+    {
+      "id": "ScorerDetermineRules",
+      "name": "ScorerDetermineRules",
+      "parameters": {
+        "jsCode": "const item = $('LoopOpportunities').first();\nconst opp = item?.json;\nif (!opp) {\n  return [{ json: { opportunity_id: null, tenant_id: null, commercial_score: 0, viability_score: 0, score: 0, justification: 'Oportunidade nao encontrada no loop.' } }];\n}\nlet commercialScore = 50;\nlet viabilityScore = 50;\nlet justification = 'Pontuacao base.';\nif (opp.website && opp.instagram) {\n  commercialScore += 20;\n  justification = 'Possui website e rede social ativa.';\n} else {\n  commercialScore -= 10;\n  justification = 'Presenca digital incompleta.';\n}\nif (opp.phone && opp.email) { viabilityScore += 20; }\nelse { viabilityScore -= 20; }\nconst finalScore = Math.min(100, Math.max(0, Math.round((commercialScore + viabilityScore) / 2)));\nreturn [{\n  json: {\n    opportunity_id: opp.id || null,\n    tenant_id: opp.tenant_id || null,\n    commercial_score: Math.min(100, Math.max(0, commercialScore)),\n    viability_score: Math.min(100, Math.max(0, viabilityScore)),\n    score: finalScore,\n    justification\n  }\n}];"
+      },
+      "position": [
+        2080,
+        160
+      ],
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2
+    },
+    {
+      "credentials": {
+        "supabaseApi": {
+          "id": "8TEbcDMv4pFPkspM",
+          "name": "HUVIbase"
+        }
+      },
+      "id": "SupabaseInsertScore",
+      "name": "SupabaseInsertScore",
+      "parameters": {
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "tenant_id",
+              "fieldValue": "={{ $json.tenant_id }}"
+            },
+            {
+              "fieldId": "opportunity_id",
+              "fieldValue": "={{ $json.opportunity_id }}"
+            },
+            {
+              "fieldId": "commercial_score",
+              "fieldValue": "={{ $json.commercial_score }}"
+            },
+            {
+              "fieldId": "viability_score",
+              "fieldValue": "={{ $json.viability_score }}"
+            },
+            {
+              "fieldId": "justification",
+              "fieldValue": "={{ $json.justification }}"
+            }
+          ]
+        },
+        "operation": "create",
+        "tableId": "scores"
+      },
+      "position": [
+        2300,
+        160
+      ],
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1
+    },
+    {
+      "credentials": {
+        "supabaseApi": {
+          "id": "8TEbcDMv4pFPkspM",
+          "name": "HUVIbase"
+        }
+      },
+      "id": "SupabaseUpdateScored",
+      "name": "SupabaseUpdateScored",
+      "parameters": {
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "score",
+              "fieldValue": "={{ $('ScorerDetermineRules').first().json.score }}"
+            },
+            {
+              "fieldId": "status",
+              "fieldValue": "scored"
+            }
+          ]
+        },
+        "filters": {
+          "conditions": [
+            {
+              "condition": "eq",
+              "keyName": "id",
+              "keyValue": "={{ $json.opportunity_id }}"
+            }
+          ]
+        },
+        "operation": "update",
+        "tableId": "opportunities"
+      },
+      "position": [
+        2520,
+        160
+      ],
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1
+    },
+    {
+      "id": "StrategistHuviBrain",
+      "name": "StrategistHuviBrain",
+      "parameters": {
+        "sendBody": true,
+        "contentType": "json",
+        "jsonBody": "={{ JSON.stringify({ prompt: 'Defina a estratégia de abordagem para vender a oferta \\'' + ($('FetchTenantOffer').first().json.name || 'Consultoria de Vendas') + '\\' (preço: ' + ($('FetchTenantOffer').first().json.price || 'sob consulta') + ') para a oportunidade de score comercial ' + $json.score + '. Diagnóstico prévio: ' + ($('ParseAudit').first().json.audit_summary || '') + '.', system_message: 'Você é o Strategist do HUVI. Retorne obrigatoriamente um objeto JSON com as chaves: approach, conversion_type (valores válidos: \\'direct_checkout\\', \\'appointment\\', \\'hybrid\\') e destination_type (valores válidos: \\'landing_page\\', \\'checkout\\', \\'calendar\\', \\'whatsapp\\', \\'external\\').' }) }}",
+        "method": "POST",
+        "options": {},
+        "specifyBody": "json",
+        "url": "https://n8n.nexus-flow.tech/webhook/huvi-brain"
+      },
+      "position": [
+        2740,
+        160
+      ],
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1
+    },
+    {
+      "id": "ParseStrategy",
+      "name": "ParseStrategy",
+      "parameters": {
+        "jsCode": "const response = $input.first()?.json || {};\nlet oppRef;\ntry { oppRef = $('LoopOpportunities').first()?.json || {}; } catch(e) { oppRef = {}; }\nlet parsedData = {};\ntry {\n  let cleanText = response.text || '';\n  cleanText = cleanText.replace(/```json/gi, '').replace(/```/g, '').trim();\n  parsedData = JSON.parse(cleanText);\n} catch (e) {\n  parsedData = {};\n}\nconst validConversionTypes = ['direct_checkout', 'appointment', 'hybrid'];\nlet conversionType = parsedData.conversion_type || 'direct_checkout';\nif (!validConversionTypes.includes(conversionType)) {\n  if (conversionType.includes('checkout')) conversionType = 'direct_checkout';\n  else if (conversionType.includes('agenda') || conversionType.includes('reuniao') || conversionType.includes('appointment')) conversionType = 'appointment';\n  else if (conversionType.includes('hibrid')) conversionType = 'hybrid';\n  else conversionType = 'direct_checkout';\n}\nconst validDestinationTypes = ['landing_page', 'checkout', 'calendar', 'whatsapp', 'external'];\nlet destinationType = parsedData.destination_type || 'checkout';\nif (!validDestinationTypes.includes(destinationType)) {\n  if (destinationType.includes('checkout')) destinationType = 'checkout';\n  else if (destinationType.includes('landing') || destinationType.includes('page')) destinationType = 'landing_page';\n  else if (destinationType.includes('calendar') || destinationType.includes('agenda') || destinationType.includes('consultation') || destinationType.includes('reuniao')) destinationType = 'calendar';\n  else if (destinationType.includes('whats') || destinationType.includes('phone')) destinationType = 'whatsapp';\n  else destinationType = 'checkout';\n}\nreturn [{\n  json: {\n    opportunity_id: oppRef.id || null,\n    tenant_id: oppRef.tenant_id || null,\n    approach: parsedData.approach || response.text || 'Abordagem padrao.',\n    conversion_type: conversionType,\n    destination_type: destinationType\n  }\n}];"
+      },
+      "position": [
+        2960,
+        160
+      ],
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2
+    },
+    {
+      "credentials": {
+        "supabaseApi": {
+          "id": "8TEbcDMv4pFPkspM",
+          "name": "HUVIbase"
+        }
+      },
+      "id": "SupabaseInsertStrategy",
+      "name": "SupabaseInsertStrategy",
+      "parameters": {
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "tenant_id",
+              "fieldValue": "={{ $json.tenant_id }}"
+            },
+            {
+              "fieldId": "opportunity_id",
+              "fieldValue": "={{ $json.opportunity_id }}"
+            },
+            {
+              "fieldId": "approach",
+              "fieldValue": "={{ $json.approach }}"
+            },
+            {
+              "fieldId": "conversion_type",
+              "fieldValue": "={{ $json.conversion_type }}"
+            },
+            {
+              "fieldId": "destination_type",
+              "fieldValue": "={{ $json.destination_type }}"
+            }
+          ]
+        },
+        "operation": "create",
+        "tableId": "strategies"
+      },
+      "position": [
+        3180,
+        160
+      ],
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1
+    },
+    {
+      "credentials": {
+        "supabaseApi": {
+          "id": "8TEbcDMv4pFPkspM",
+          "name": "HUVIbase"
+        }
+      },
+      "id": "SupabaseUpdateStrategyCreated",
+      "name": "SupabaseUpdateStrategyCreated",
+      "parameters": {
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "status",
+              "fieldValue": "strategy_defined"
+            }
+          ]
+        },
+        "filters": {
+          "conditions": [
+            {
+              "condition": "eq",
+              "keyName": "id",
+              "keyValue": "={{ $json.opportunity_id }}"
+            }
+          ]
+        },
+        "operation": "update",
+        "tableId": "opportunities"
+      },
+      "position": [
+        3400,
+        160
+      ],
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1
+    },
+    {
+      "id": "TemplateSelector",
+      "name": "TemplateSelector",
+      "parameters": {
+        "jsCode": "// === TEMPLATE SELECTOR ===\n// Seleciona o modelo ideal de copy para cada step com base nos dados coletados\n// Fonte: Template-Copy-Followup.md v1.0 + dados Google Maps + Firecrawl\n\nconst opp = $('LoopOpportunities').first().json;\nconst offer = $('FetchTenantOffer').first().json;\nconst audit = $('ParseAudit').first()?.json || {};\nconst strategy = $('ParseStrategy').first()?.json || {};\n\n// --- Dados coletados (Google Maps / Firecrawl / Enricher) ---\nconst ratingValue = parseFloat(opp.rating_value) || 0;\nconst ratingCount = parseInt(opp.rating_count) || 0;\nconst category = (opp.category || opp.segment || '').toLowerCase();\nconst hasWebsite = !!opp.website;\nconst hasPhone = !!opp.phone;\nconst companyName = opp.company_name || 'sua empresa';\nconst contactName = opp.contact_name || '';\nconst city = opp.city || '';\nconst state = opp.state || '';\nconst firecrawlData = opp.firecrawl_data || null;\nconst description = opp.description || '';\n\n// --- Segmentos com agenda (saúde, fitness, beleza, etc.) ---\nconst scheduleSegments = ['saude', 'fitness', 'clinica', 'dentista', 'barbearia', 'salao', 'estetica', 'veterinario', 'academia', 'medico', 'hospital', 'fisioterapia', 'pilates', 'yoga', 'spa'];\nconst isScheduleSegment = scheduleSegments.some(s => category.includes(s));\n\n// --- Análise de condições para seleção ---\nconst hasHighRating = ratingValue >= 4.0 && ratingCount >= 20;\nconst hasFewReviews = ratingCount < 5;\nconst hasTeam = firecrawlData && firecrawlData.team_size && firecrawlData.team_size >= 3;\nconst hasWhatsApp = hasPhone; // No contexto atual, phone implica WhatsApp como canal\n\n// --- Função de seleção baseada em dados ---\nfunction selectModelNumber(step) {\n  // Prioridade: condição mais específica primeiro\n  if (hasHighRating) return 3;           // \"excelentes avaliações\"\n  if (isScheduleSegment) return 1;       // \"agendamentos dos clientes\"\n  if (!hasWebsite) return 2;             // \"presença digital limitada\"\n  if (hasWhatsApp || hasTeam) return 4;  // \"alto volume / equipe\"\n  return 5;                              // fallback genérico\n}\n\n// --- Personalização dinâmica (snippets condicionais) ---\nconst personalizations = [];\nif (hasHighRating) {\n  personalizations.push('Vi que vocês possuem mais de ' + ratingCount + ' avaliações positivas.');\n}\nif (hasFewReviews && !hasHighRating) {\n  personalizations.push('Vi que ainda existe espaço para fortalecer a presença digital da empresa.');\n}\nif (!hasWebsite) {\n  personalizations.push('Percebi que a maior parte do atendimento parece acontecer pelos canais diretos.');\n}\nif (isScheduleSegment) {\n  personalizations.push('Imagino que manter a agenda organizada seja essencial para evitar horários ociosos.');\n}\nif (hasTeam) {\n  personalizations.push('Com uma equipe maior, normalmente organizar os atendimentos se torna ainda mais importante.');\n}\n\n// --- Templates hardcoded (espelho do Template-Copy-Followup.md) ---\nconst templates = {\n  1: {\n    1: 'Olá, {Nome}.\\n\\nVi que vocês trabalham com {segmento}.\\n\\nFiquei curioso sobre como vocês organizam hoje os agendamentos dos clientes.\\n\\nTenho acompanhado empresas parecidas que conseguiram reduzir bastante o tempo gasto com atendimento depois de organizarem esse processo.\\n\\nHoje vocês fazem esse controle manualmente?',\n    2: 'Olá.\\n\\nEnquanto pesquisava empresas da região encontrei o perfil de vocês.\\n\\nPercebi que atendem um bom volume de clientes.\\n\\nPosso fazer uma pergunta?\\n\\nComo vocês controlam os horários e confirmações dos atendimentos?',\n    3: 'Olá, {Nome}.\\n\\nVi que a empresa de vocês possui excelentes avaliações.\\n\\nNormalmente empresas que crescem começam a enfrentar um desafio comum:\\n\\norganizar a agenda sem perder clientes.\\n\\nIsso acontece por aí também?',\n    4: 'Olá.\\n\\nUma curiosidade...\\n\\nComo vocês fazem quando vários clientes entram em contato ao mesmo tempo querendo agendar?\\n\\nPergunto porque tenho visto muitos negócios perdendo tempo justamente nessa etapa.',\n    5: 'Olá.\\n\\nVi o perfil da empresa de vocês e uma dúvida me chamou atenção.\\n\\nComo vocês evitam esquecimentos, cancelamentos e horários vagos na agenda?'\n  },\n  2: {\n    1: 'Oi.\\n\\nPassei novamente porque essa situação é mais comum do que parece.\\n\\nMuitas empresas só descobrem quanto tempo perdem com organização da agenda quando começam a medir esse processo.\\n\\nVocês já chegaram a analisar isso?',\n    2: 'Olá.\\n\\nTalvez minha mensagem anterior tenha passado despercebida.\\n\\nTenho visto empresas conseguindo reduzir bastante o trabalho operacional apenas organizando melhor os agendamentos.\\n\\nFiquei curioso para saber como vocês fazem hoje.',\n    3: 'Uma pergunta rápida.\\n\\nQuando alguém cancela um horário de última hora, vocês conseguem preencher essa vaga rapidamente?',\n    4: 'Oi.\\n\\nVi novamente o perfil de vocês.\\n\\nAcredito que exista uma boa oportunidade para deixar o atendimento ainda mais organizado.\\n\\nVale a pena conversarmos alguns minutos?',\n    5: 'Olá.\\n\\nNem sempre percebemos quanto tempo a equipe dedica somente para responder mensagens e organizar horários.\\n\\nComo isso funciona atualmente na empresa?'\n  },\n  3: {\n    1: 'Olá.\\n\\nEssa será minha última mensagem.\\n\\nCaso organizar os agendamentos ou reduzir o tempo gasto com atendimento faça sentido para vocês em algum momento, fico à disposição.\\n\\nDesejo muito sucesso.',\n    2: 'Oi.\\n\\nImagino que este não seja o melhor momento.\\n\\nSem problema.\\n\\nSe no futuro fizer sentido conversar sobre formas de ganhar mais previsibilidade na agenda, será um prazer ajudar.',\n    3: 'Olá.\\n\\nVou encerrar meu contato para não ser inconveniente.\\n\\nSe algum dia quiser trocar ideias sobre como empresas do seu segmento estão organizando melhor seus atendimentos, basta responder esta mensagem.',\n    4: 'Passando apenas para finalizar nossa conversa.\\n\\nSe este assunto não faz sentido agora, tudo bem.\\n\\nMas, caso em algum momento queira reduzir o trabalho operacional da equipe, estarei por aqui.',\n    5: 'Obrigado pelo seu tempo.\\n\\nMesmo sem retorno, espero que a empresa continue crescendo.\\n\\nSe futuramente fizer sentido conversar sobre organização dos atendimentos, pode contar comigo.'\n  }\n};\n\n// --- Substituir placeholders ---\nfunction replacePlaceholders(text) {\n  return text\n    .replace(/\\{Nome\\}/g, contactName || '')\n    .replace(/\\{segmento\\}/g, category || offer.name || 'seu segmento')\n    .replace(/\\{empresa\\}/g, companyName)\n    .replace(/\\{cidade\\}/g, city)\n    .replace(/\\{estado\\}/g, state)\n    .replace(/\\{oferta\\}/g, offer.name || 'nossas soluções')\n    .replace(/\\{descricao\\}/g, offer.description || '')\n    .replace(/\\{rating_count\\}/g, String(ratingCount));\n}\n\n// --- Selecionar e montar output ---\nconst selectedModels = {};\nfor (let step = 1; step <= 3; step++) {\n  const modelNum = selectModelNumber(step);\n  const rawTemplate = templates[step][modelNum];\n  selectedModels[step] = {\n    model_number: modelNum,\n    template_raw: rawTemplate,\n    template_filled: replacePlaceholders(rawTemplate)\n  };\n}\n\nreturn [{\n  json: {\n    // Dados da oportunidade propagados\n    opportunity_id: opp.id,\n    tenant_id: opp.tenant_id,\n    company_name: companyName,\n    contact_name: contactName,\n    category: category,\n    city: city,\n    state: state,\n    website: opp.website || null,\n    rating_value: ratingValue,\n    rating_count: ratingCount,\n    firecrawl_data: firecrawlData,\n    description: description,\n    // Dados da oferta\n    offer_name: offer.name || '',\n    offer_description: offer.description || '',\n    offer_price: offer.price || null,\n    offer_checkout_url: offer.checkout_url || null,\n    offer_calendar_url: offer.calendar_url || null,\n    // Dados do audit/strategy\n    audit_summary: audit.audit_summary || '',\n    approach: strategy.approach || '',\n    conversion_type: strategy.conversion_type || 'direct_checkout',\n    // Templates selecionados\n    selected_models: selectedModels,\n    personalizations: personalizations,\n    // Vocabulário para o prompt\n    forbidden_words: ['robô', 'automação', 'IA', 'fluxo', 'integração', 'API', 'CRM', 'chatbot', 'sistema', 'software', 'funil'],\n    recommended_words: ['organizar', 'facilitar', 'reduzir', 'ganhar tempo', 'previsibilidade', 'crescimento', 'atendimento', 'agenda', 'clientes', 'confirmação', 'resultado']\n  }\n}];"
+      },
+      "position": [
+        3530,
+        160
+      ],
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2
+    },
+    {
+      "id": "CampaignHuviBrain",
+      "name": "CampaignHuviBrain",
+      "parameters": {
+        "sendBody": true,
+        "contentType": "json",
+        "jsonBody": "={{ JSON.stringify({ prompt: 'Voce deve gerar uma SEQUENCIA COMPLETA de 3 mensagens de prospeccao comercial (follow-up) para uma cadencia automatizada.\\n\\n=== INSTRUCOES OBRIGATORIAS ===\\nVoce DEVE usar os TEMPLATES DE REFERENCIA abaixo como base. Adapte-os com os dados do lead e da oferta, mas MANTENHA o tom, a estrutura e o estilo dos templates. NAO invente um estilo proprio.\\n\\n=== REGRAS ABSOLUTAS DE ESCRITA ===\\n1. NUNCA usar estas palavras: ' + ($json.forbidden_words || []).join(', ') + '\\n2. PRIORIZAR estas palavras: ' + ($json.recommended_words || []).join(', ') + '\\n3. Cada mensagem deve ser lida em MENOS DE 20 SEGUNDOS\\n4. Frases curtas. Linguagem simples.\\n5. SEMPRE terminar com uma pergunta (steps 1 e 2) ou deixar a porta aberta (step 3)\\n6. NUNCA tentar vender na primeira mensagem\\n7. NUNCA parecer mensagem automatica\\n8. SEMPRE falar do RESULTADO que o cliente pode obter, nunca da tecnologia\\n9. Tom progressivo: Step 1 = Consultivo/Curioso | Step 2 = Curioso/Beneficio | Step 3 = Respeitoso/Porta aberta\\n\\n=== OFERTA (o que estamos vendendo) ===\\nNome: ' + ($json.offer_name || 'Consultoria de Vendas') + '\\nDescricao: ' + ($json.offer_description || '') + '\\nPreco: ' + ($json.offer_price || 'sob consulta') + '\\n\\n=== LEAD (destinatario) ===\\nEmpresa: ' + ($json.company_name || '') + '\\nContato: ' + ($json.contact_name || '') + '\\nSegmento: ' + ($json.category || '') + '\\nCidade/Estado: ' + ($json.city || '') + '/' + ($json.state || '') + '\\nSite: ' + ($json.website || 'nao possui') + '\\nAvaliacao Google: ' + ($json.rating_value || 'N/A') + ' (' + ($json.rating_count || 0) + ' avaliacoes)\\nDiagnostico comercial: ' + ($json.audit_summary || '') + '\\nEstrategia: ' + ($json.approach || '') + '\\n\\n=== PERSONALIZACOES SELECIONADAS (use na copy) ===\\n' + ($json.personalizations || []).join('\\n') + '\\n\\n=== TEMPLATES DE REFERENCIA (adapte, nao copie literalmente) ===\\nStep 1 (Dia 0 - Primeiro Contato): ' + ($json.selected_models?.[1]?.template_filled || '') + '\\n---\\nStep 2 (Dia 3 - Follow-up sem resposta): ' + ($json.selected_models?.[2]?.template_filled || '') + '\\n---\\nStep 3 (Dia 7 - Ultimo contato): ' + ($json.selected_models?.[3]?.template_filled || '') + '\\n\\nGere exatamente 3 mensagens adaptando os templates acima com os dados do lead e da oferta. Mantenha o tom e o estilo dos templates.', system_message: 'Voce e o agente Campaign do HUVI. Gere copies comerciais seguindo RIGOROSAMENTE os templates de referencia fornecidos. Retorne estritamente um JSON com as chaves: channel (email ou whatsapp), messages_matrix (array de objetos com step, delay_days, subject, message), subject (primeira mensagem) e message (primeira mensagem).' }) }}",
+        "method": "POST",
+        "options": {},
+        "specifyBody": "json",
+        "url": "https://n8n.nexus-flow.tech/webhook/huvi-brain"
+      },
+      "position": [
+        3750,
+        160
+      ],
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1
+    },
+    {
+      "id": "ParseCampaign",
+      "name": "ParseCampaign",
+      "parameters": {
+        "jsCode": "const response = $input.first().json;\nlet parsedData = {};\ntry {\n  let cleanText = response.text || \"\";\n  cleanText = cleanText.replace(/```json/gi, \"\").replace(/```/g, \"\").trim();\n  parsedData = JSON.parse(cleanText);\n} catch (e) {\n  parsedData = {};\n}\n\nlet messagesMatrix = null;\nlet firstSubject = parsedData.subject || null;\nlet firstMessage = parsedData.message || response.text;\n\nif (parsedData.messages_matrix && Array.isArray(parsedData.messages_matrix) && parsedData.messages_matrix.length > 0) {\n  messagesMatrix = parsedData.messages_matrix.map((m, i) => ({\n    step: m.step || (i + 1),\n    delay_days: m.delay_days !== undefined ? m.delay_days : (i === 0 ? 0 : i === 1 ? 3 : 7),\n    subject: m.subject || null,\n    message: m.message || ''\n  }));\n  firstSubject = messagesMatrix[0].subject;\n  firstMessage = messagesMatrix[0].message;\n}\n\nlet channel = (parsedData.channel || \"whatsapp\").toLowerCase().trim();\nif (channel !== 'email' && channel !== 'whatsapp') {\n  channel = 'whatsapp';\n}\n\nconst finalMatrix = messagesMatrix || [];\nconst llmSucceeded = firstMessage && firstMessage.length > 20;\n\nreturn [{\n  json: {\n    opportunity_id: $('LoopOpportunities').first().json.id,\n    tenant_id: $('LoopOpportunities').first().json.tenant_id,\n    channel: channel,\n    subject: firstSubject || \"Abordagem Comercial\",\n    message: firstMessage || \"\",\n    messages_matrix: JSON.stringify(finalMatrix),\n    _llmSucceeded: llmSucceeded\n  }\n}];"
+      },
+      "position": [
+        3840,
+        160
+      ],
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2
+    },
+    {
+      "id": "CampaignFallback",
+      "name": "CampaignFallback",
+      "parameters": {
+        "jsCode": "// === CAMPAIGN FALLBACK COM TEMPLATES ===\n// Usa os templates do Template-Copy-Followup.md com substituição de variáveis\n// Seleção baseada em dados coletados do Google Maps / Firecrawl\n\ntry {\n  const input = $input.first().json;\n  const templateData = $('TemplateSelector').first().json;\n  const opp = $('LoopOpportunities').first().json;\n  const offer = $('FetchTenantOffer').first().json;\n  \n  // Se o LLM gerou copy válida, usar diretamente\n  if (input._llmSucceeded && input.message && input.message.length > 20) {\n    return [{ json: input }];\n  }\n  \n  // --- Dados do TemplateSelector ---\n  const selectedModels = templateData.selected_models || {};\n  const personalizations = templateData.personalizations || [];\n  const companyName = templateData.company_name || opp.company_name || 'sua empresa';\n  const contactName = templateData.contact_name || opp.contact_name || '';\n  const category = templateData.category || opp.category || '';\n  const ratingValue = parseFloat(templateData.rating_value || opp.rating_value) || 0;\n  const ratingCount = parseInt(templateData.rating_count || opp.rating_count) || 0;\n  const city = templateData.city || opp.city || '';\n  const state = templateData.state || opp.state || '';\n  \n  const offerName = offer.name || 'nossas soluções';\n  const offerDesc = offer.description || '';\n  const hasCheckout = !!offer.checkout_url;\n  const hasCalendar = !!offer.calendar_url;\n  \n  // --- Função para substituir placeholders ---\n  function fillTemplate(template) {\n    if (!template) return '';\n    return template\n      .replace(/\\{Nome\\}/g, contactName)\n      .replace(/\\{segmento\\}/g, category || offerName)\n      .replace(/\\{empresa\\}/g, companyName)\n      .replace(/\\{cidade\\}/g, city)\n      .replace(/\\{estado\\}/g, state)\n      .replace(/\\{oferta\\}/g, offerName)\n      .replace(/\\{descricao\\}/g, offerDesc)\n      .replace(/\\{rating_count\\}/g, String(ratingCount))\n      .replace(/\\\\n/g, '\\n');\n  }\n  \n  // --- Montar mensagens a partir dos templates selecionados ---\n  let msg1, msg2, msg3;\n  \n  if (selectedModels[1] && selectedModels[1].template_filled) {\n    msg1 = fillTemplate(selectedModels[1].template_filled);\n  } else {\n    msg1 = 'Olá. Vi o perfil da ' + companyName + ' e fiquei curioso. Como vocês organizam hoje o atendimento aos clientes?';\n  }\n  \n  if (selectedModels[2] && selectedModels[2].template_filled) {\n    msg2 = fillTemplate(selectedModels[2].template_filled);\n  } else {\n    msg2 = 'Olá. Tenho visto empresas conseguindo reduzir bastante o trabalho operacional. Fiquei curioso para saber como vocês fazem hoje.';\n  }\n  \n  if (selectedModels[3] && selectedModels[3].template_filled) {\n    msg3 = fillTemplate(selectedModels[3].template_filled);\n  } else {\n    msg3 = 'Obrigado pelo seu tempo. Se futuramente fizer sentido conversar, pode contar comigo.';\n  }\n  \n  // --- Adicionar personalização dinâmica ao Step 1 se disponível ---\n  if (personalizations.length > 0) {\n    const snippet = personalizations[0];\n    // Inserir o snippet após a primeira linha do template\n    const lines = msg1.split('\\n');\n    if (lines.length > 1) {\n      lines.splice(1, 0, '', snippet);\n      msg1 = lines.join('\\n');\n    }\n  }\n  \n  // --- Subject dinâmico ---\n  const subjects = ['Primeiro Contato', 'Follow-up', 'Ultimo Contato'];\n  \n  return [{\n    json: {\n      opportunity_id: opp.id,\n      tenant_id: opp.tenant_id,\n      channel: 'whatsapp',\n      subject: subjects[0],\n      message: msg1,\n      messages_matrix: JSON.stringify([\n        { step: 1, delay_days: 0, subject: subjects[0], message: msg1 },\n        { step: 2, delay_days: 3, subject: subjects[1], message: msg2 },\n        { step: 3, delay_days: 7, subject: subjects[2], message: msg3 }\n      ])\n    }\n  }];\n} catch (e) {\n  // --- Safe fallback absoluto ---\n  let oppRef;\n  try { oppRef = $('LoopOpportunities').first()?.json || {}; } catch(ex) { oppRef = {}; }\n  const safeName = oppRef.company_name || 'sua empresa';\n  const safeMsg1 = 'Olá. Vi o perfil da ' + safeName + ' e fiquei curioso sobre como vocês organizam o atendimento. Posso fazer uma pergunta?';\n  const safeMsg2 = 'Olá. Tenho visto empresas do mesmo segmento conseguindo organizar melhor o atendimento. Como funciona atualmente na empresa?';\n  const safeMsg3 = 'Obrigado pelo seu tempo. Se futuramente fizer sentido conversar sobre organização dos atendimentos, pode contar comigo.';\n  return [{\n    json: {\n      opportunity_id: oppRef.id || null,\n      tenant_id: oppRef.tenant_id || null,\n      channel: 'whatsapp',\n      subject: 'Primeiro Contato',\n      message: safeMsg1,\n      messages_matrix: JSON.stringify([\n        { step: 1, delay_days: 0, subject: 'Primeiro Contato', message: safeMsg1 },\n        { step: 2, delay_days: 3, subject: 'Follow-up', message: safeMsg2 },\n        { step: 3, delay_days: 7, subject: 'Ultimo Contato', message: safeMsg3 }\n      ])\n    }\n  }];\n}"
+      },
+      "position": [
+        4060,
+        160
+      ],
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2
+    },
+    {
+      "id": "SupabaseInsertCampaign",
+      "name": "SupabaseInsertCampaign",
+      "parameters": {
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "tenant_id",
+              "fieldValue": "={{ $('CampaignFallback').first().json.tenant_id }}"
+            },
+            {
+              "fieldId": "opportunity_id",
+              "fieldValue": "={{ $('CampaignFallback').first().json.opportunity_id }}"
+            },
+            {
+              "fieldId": "channel",
+              "fieldValue": "={{ $('CampaignFallback').first().json.channel }}"
+            },
+            {
+              "fieldId": "subject",
+              "fieldValue": "={{ $('CampaignFallback').first().json.subject }}"
+            },
+            {
+              "fieldId": "message",
+              "fieldValue": "={{ $('CampaignFallback').first().json.message }}"
+            },
+            {
+              "fieldId": "messages_matrix",
+              "fieldValue": "={{ $('CampaignFallback').first().json.messages_matrix }}"
+            },
+            {
+              "fieldId": "current_step",
+              "fieldValue": "1"
+            },
+            {
+              "fieldId": "status",
+              "fieldValue": "draft"
+            }
+          ]
+        },
+        "operation": "create",
+        "tableId": "campaigns"
+      },
+      "position": [
+        4480,
+        280
+      ],
+      "type": "n8n-nodes-base.supabase",
+      "credentials": { "supabaseApi": { "id": "8TEbcDMv4pFPkspM", "name": "HUVIbase" } }, "typeVersion": 1
+    },
+    {
+      "credentials": {
+        "supabaseApi": {
+          "id": "8TEbcDMv4pFPkspM",
+          "name": "HUVIbase"
+        }
+      },
+      "id": "SupabaseUpdateCampaignCreated",
+      "name": "SupabaseUpdateCampaignCreated",
+      "parameters": {
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "status",
+              "fieldValue": "campaign_created"
+            }
+          ]
+        },
+        "filters": {
+          "conditions": [
+            {
+              "condition": "eq",
+              "keyName": "id",
+              "keyValue": "={{ $json.opportunity_id }}"
+            }
+          ]
+        },
+        "operation": "update",
+        "tableId": "opportunities"
+      },
+      "position": [
+        4700,
+        160
+      ],
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1
+    },
+    {
+      "id": "LoopEnd",
+      "name": "LoopEnd",
+      "parameters": {
+        "jsCode": "return [{ json: { status: \"success\", message: \"Oportunidade processada com sucesso no pipeline de agentes core.\" } }];"
+      },
+      "position": [
+        4920,
+        160
+      ],
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2
+    },
+    {
+      "id": "DetermineRoute",
+      "name": "DetermineRoute",
+      "parameters": {
+        "jsCode": "let opportunityId = null;\ntry {\n  const webhookNode = $('Webhook');\n  if (webhookNode && typeof webhookNode.first === 'function') {\n    const firstItem = webhookNode.first();\n    if (firstItem && firstItem.json && firstItem.json.body) {\n      opportunityId = firstItem.json.body.opportunityId || null;\n    } \n  }\n} catch (e) {}\n\nreturn [{ json: { hasOpportunityId: opportunityId ? 'true' : 'false', opportunityId } }];"
+      },
+      "position": [
+        280,
+        320
+      ],
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2
+    },
+    {
+      "id": "CheckTriggerSource",
+      "name": "CheckTriggerSource",
+      "parameters": {
+        "conditions": {
+          "number": [],
+          "string": [
+            {
+              "value1": "={{ $json.hasOpportunityId }}",
+              "value2": "true",
+              "operation": "equal"
+            }
+          ]
+        }
+      },
+      "position": [
+        280,
+        480
+      ],
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1
+    },
+    {
+      "credentials": {
+        "supabaseApi": {
+          "id": "8TEbcDMv4pFPkspM",
+          "name": "HUVIbase"
+        }
+      },
+      "id": "FetchSingleOpp",
+      "name": "FetchSingleOpp",
+      "parameters": {
+        "filters": {
+          "conditions": [
+            {
+              "condition": "eq",
+              "keyName": "id",
+              "keyValue": "={{ $('DetermineRoute').first().json.opportunityId }}"
+            },
+            {
+              "condition": "is",
+              "keyName": "deleted_at",
+              "keyValue": "null"
+            }
+          ]
+        },
+        "operation": "getAll",
+        "tableId": "opportunities"
+      },
+      "position": [
+        460,
+        480
+      ],
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1
+    },
+    {
+      "id": "FinalResponse",
+      "name": "FinalResponse",
+      "parameters": {
+        "jsCode": "return [{ json: { status: \"success\", message: \"Pipeline concluído com sucesso.\" } }];"
+      },
+      "position": [
+        540,
+        320
+      ],
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2
+    }
+  ],
+  "connections": {
+    "AuditorHuviBrain": {
+      "main": [
+        [
+          {
+            "index": 0,
+            "node": "ParseAudit",
+            "type": "main"
+          }
+        ]
+      ]
+    },
+    "CampaignFallback": {
+      "main": [
+        [
+          {
+            "index": 0,
+            "node": "SupabaseInsertCampaign",
+            "type": "main"
+          }
+        ]
+      ]
+    },
+    "CampaignHuviBrain": {
+      "main": [
+        [
+          {
+            "index": 0,
+            "node": "ParseCampaign",
+            "type": "main"
+          }
+        ]
+      ]
+    },
+    "DecisionBlock": {
+      "main": [
+        [
+          {
+            "index": 0,
+            "node": "SupabaseUpdateDecision",
+            "type": "main"
+          }
+        ]
+      ]
+    },
+    "DetermineRoute": {
+      "main": [
+        [
+          {
+            "index": 0,
+            "node": "CheckTriggerSource",
+            "type": "main"
+          }
+        ]
+      ]
+    },
+    "FetchTenantOffer": {
+      "main": [
+        [
+          {
+            "index": 0,
+            "node": "DetermineRoute",
+            "type": "main"
+          }
+        ]
+      ]
+    },
+    "CheckTriggerSource": {
+      "main": [
+        [
+          {
+            "index": 0,
+            "node": "FetchSingleOpp",
+            "type": "main"
+          }
+        ],
+        [
+          {
+            "index": 0,
+            "node": "FetchUnprocessedOpps",
+            "type": "main"
+          }
+        ]
+      ]
+    },
+    "FetchSingleOpp": {
+      "main": [
+        [
+          {
+            "index": 0,
+            "node": "FilterOpps",
+            "type": "main"
+          }
+        ]
+      ]
+    },
+    "FetchUnprocessedOpps": {
+      "main": [
+        [
+          {
+            "index": 0,
+            "node": "FilterOpps",
+            "type": "main"
+          }
+        ]
+      ]
+    },
+    "FilterOpps": {
+      "main": [
+        [
+          {
+            "index": 0,
+            "node": "LoopOpportunities",
+            "type": "main"
+          }
+        ]
+      ]
+    },
+    "ManualTrigger": {
+      "main": [
+        [
+          {
+            "index": 0,
+            "node": "FetchTenantOffer",
+            "type": "main"
+          }
+        ]
+      ]
+    },
+    "ParseAudit": {
+      "main": [
+        [
+          {
+            "index": 0,
+            "node": "SupabaseInsertAudit",
+            "type": "main"
+          }
+        ]
+      ]
+    },
+    "ParseCampaign": {
+      "main": [
+        [
+          {
+            "index": 0,
+            "node": "CampaignFallback",
+            "type": "main"
+          }
+        ]
+      ]
+    },
+    "ParseStrategy": {
+      "main": [
+        [
+          {
+            "index": 0,
+            "node": "SupabaseInsertStrategy",
+            "type": "main"
+          }
+        ]
+      ]
+    },
+    "ScheduleTrigger": {
+      "main": [
+        [
+          {
+            "index": 0,
+            "node": "FetchTenantOffer",
+            "type": "main"
+          }
+        ]
+      ]
+    },
+    "ScorerDetermineRules": {
+      "main": [
+        [
+          {
+            "index": 0,
+            "node": "SupabaseInsertScore",
+            "type": "main"
+          }
+        ]
+      ]
+    },
+    "StrategistHuviBrain": {
+      "main": [
+        [
+          {
+            "index": 0,
+            "node": "ParseStrategy",
+            "type": "main"
+          }
+        ]
+      ]
+    },
+    "SupabaseInsertAudit": {
+      "main": [
+        [
+          {
+            "index": 0,
+            "node": "SupabaseUpdateAuditId",
+            "type": "main"
+          }
+        ]
+      ]
+    },
+    "SupabaseInsertCampaign": {
+      "main": [
+        [
+          {
+            "index": 0,
+            "node": "SupabaseUpdateCampaignCreated",
+            "type": "main"
+          }
+        ]
+      ]
+    },
+    "SupabaseInsertScore": {
+      "main": [
+        [
+          {
+            "index": 0,
+            "node": "SupabaseUpdateScored",
+            "type": "main"
+          }
+        ]
+      ]
+    },
+    "SupabaseInsertStrategy": {
+      "main": [
+        [
+          {
+            "index": 0,
+            "node": "SupabaseUpdateStrategyCreated",
+            "type": "main"
+          }
+        ]
+      ]
+    },
+    "SupabaseUpdateAuditId": {
+      "main": [
+        [
+          {
+            "index": 0,
+            "node": "ScorerDetermineRules",
+            "type": "main"
+          }
+        ]
+      ]
+    },
+    "SupabaseUpdateCampaignCreated": {
+      "main": [
+        [
+          {
+            "index": 0,
+            "node": "LoopEnd",
+            "type": "main"
+          }
+        ]
+      ]
+    },
+    "SupabaseUpdateDecision": {
+      "main": [
+        [
+          {
+            "index": 0,
+            "node": "AuditorHuviBrain",
+            "type": "main"
+          }
+        ]
+      ]
+    },
+    "SupabaseUpdateScored": {
+      "main": [
+        [
+          {
+            "index": 0,
+            "node": "StrategistHuviBrain",
+            "type": "main"
+          }
+        ]
+      ]
+    },
+    "SupabaseUpdateStrategyCreated": {
+      "main": [
+        [
+          {
+            "index": 0,
+            "node": "TemplateSelector",
+            "type": "main"
+          }
+        ]
+      ]
+    },
+    "TemplateSelector": {
+      "main": [
+        [
+          {
+            "index": 0,
+            "node": "CampaignHuviBrain",
+            "type": "main"
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "index": 0,
+            "node": "FetchTenantOffer",
+            "type": "main"
+          }
+        ]
+      ]
+    },
+    "LoopOpportunities": {
+      "main": [
+        [
+          {
+            "index": 0,
+            "node": "FinalResponse",
+            "type": "main"
+          }
+        ],
+        [
+          {
+            "index": 0,
+            "node": "DecisionBlock",
+            "type": "main"
+          }
+        ]
+      ]
+    },
+    "LoopEnd": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  }
+}
+

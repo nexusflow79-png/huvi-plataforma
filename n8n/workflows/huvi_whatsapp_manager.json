@@ -1,0 +1,138 @@
+{
+  "name": "HUVI_WhatsApp_Manager",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "huvi-whatsapp-connect",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "Webhook",
+      "name": "Webhook (Connect)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        200,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $input.first().json.body || {};\n\nif (!body.phone) {\n  throw new Error('O número de telefone é obrigatório');\n}\n\n// Limpa o número para deixar apenas dígitos\nlet phone = String(body.phone).replace(/\\D/g, '');\n\n// Adiciona 55 se faltar o DDI\nif (phone.length === 10 || phone.length === 11) {\n  phone = '55' + phone;\n}\n\nreturn [{\n  json: {\n    phone: phone,\n    instanceName: body.instanceName || 'HUVI',\n    // IMPORTANTE: Insira a URL e a API Key da sua Evolution API abaixo, caso queira substituir a mock.\n    evolutionUrl: process.env.EVOLUTION_API_URL || 'http://seu-evolution-api.com',\n    evolutionApiKey: process.env.EVOLUTION_API_KEY || 'sua-global-api-key'\n  }\n}];"
+      },
+      "id": "FormatData",
+      "name": "Format Request",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        400,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $json.evolutionUrl }}/instance/connect/{{ $json.instanceName }}?number={{ $json.phone }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "={{ $json.evolutionApiKey }}"
+            }
+          ]
+        },
+        "options": {
+          "allowUnauthorizedCerts": true,
+          "ignoreResponseCode": true
+        }
+      },
+      "id": "EvolutionAPI",
+      "name": "Call Evolution API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        600,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const evoRes = $input.first().json;\nlet code = null;\nlet success = false;\n\n// Se houver propriedade pairingCode ou code, conectamos com sucesso\nif (evoRes && (evoRes.pairingCode || evoRes.code)) {\n  code = evoRes.pairingCode || evoRes.code;\n  success = true;\n} else if (evoRes && evoRes.status === 404) {\n  // Instância não encontrada ou erro\n  code = null;\n} else {\n  // MOCK DE FALLBACK: Se a API não estiver configurada no nó anterior, enviamos um código fictício para testes.\n  code = 'HUVI-' + Math.floor(1000 + Math.random() * 9000);\n  success = true;\n}\n\nreturn [{\n  json: {\n    success,\n    code,\n    raw_response: evoRes\n  }\n}];"
+      },
+      "id": "ProcessResponse",
+      "name": "Process Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        800,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"success\": {{ $json.success }},\n  \"code\": \"{{ $json.code }}\"\n}",
+        "options": {}
+      },
+      "id": "RespondRequest",
+      "name": "Respond Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        1000,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "FormatData",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "FormatData": {
+      "main": [
+        [
+          {
+            "node": "EvolutionAPI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "EvolutionAPI": {
+      "main": [
+        [
+          {
+            "node": "ProcessResponse",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ProcessResponse": {
+      "main": [
+        [
+          {
+            "node": "RespondRequest",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

@@ -1,0 +1,212 @@
+{
+  "name": "HUVI_Brain_Orchestrator",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "huvi-brain",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "Webhook",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        200,
+        240
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $input.first().json.body || {};\nconst prompt = body.prompt;\nconst systemMessage = body.system_message || \"Você é o HUVI Brain, o orquestrador de IA do Hub de Vendas Inteligente.\";\nconst model = body.model || \"gpt-4o-mini\";\nconst tenantId = body.tenant_id || \"sub_nbkzgibe2mb1so5a\"; // Default para o inquilino de testes se não fornecido\nconst agentName = body.agent_name || \"Desconhecido\";\n\nif (!prompt) {\n  throw new Error(\"O parâmetro 'prompt' é obrigatório.\");\n}\n\nreturn [{\n  json: {\n    prompt,\n    systemMessage,\n    model,\n    tenant_id: tenantId,\n    agent_name: agentName,\n    messages: [\n      { role: \"system\", content: systemMessage },\n      { role: \"user\", content: prompt }\n    ]\n  }\n}];"
+      },
+      "id": "PreparePayload",
+      "name": "PreparePayload",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        400,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "chatModel": "={{ $json.model || 'gpt-4o-mini' }}",
+        "operation": "complete",
+        "prompt": {
+          "messages": [
+            {
+              "content": "={{ $json.systemMessage }}",
+              "role": "system"
+            },
+            {
+              "content": "={{ $json.prompt }}",
+              "role": "user"
+            }
+          ]
+        },
+        "resource": "chat",
+        "simplifyOutput": false
+      },
+      "id": "LLMRequest",
+      "name": "LLMRequest",
+      "type": "n8n-nodes-base.openAi",
+      "typeVersion": 1.1,
+      "position": [
+        600,
+        240
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "eusZXk680SIkIxvq",
+          "name": "HUVI_OpenAI"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const response = $input.first().json;\nlet payload = {};\ntry {\n  payload = $('PreparePayload').first().json;\n} catch (e) {}\n\nif (response.error) {\n  throw new Error(\"Erro retornado pela LLM: \" + JSON.stringify(response.error));\n}\n\nconst content = response.choices?.[0]?.message?.content || \"\";\nconst promptTokens = response.usage?.prompt_tokens || 0;\nconst completionTokens = response.usage?.completion_tokens || 0;\nconst totalTokens = response.usage?.total_tokens || 0;\n\nreturn [{\n  json: {\n    success: true,\n    text: content.trim(),\n    tenant_id: payload.tenant_id,\n    agent_name: payload.agent_name,\n    model: payload.model,\n    usage: {\n      prompt_tokens: promptTokens,\n      completion_tokens: completionTokens,\n      total_tokens: totalTokens\n    }\n  }\n}];"
+      },
+      "id": "ParseResponse",
+      "name": "ParseResponse",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        800,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "schema": "public",
+        "table": "ai_usage",
+        "columns": "tenant_id, model, prompt_tokens, completion_tokens, total_tokens, cost, agent_name",
+        "upsertDataUI": {
+          "upsertDataValues": [
+            {
+              "column": "tenant_id",
+              "value": "={{ $json.tenant_id }}"
+            },
+            {
+              "column": "model",
+              "value": "={{ $json.model }}"
+            },
+            {
+              "column": "prompt_tokens",
+              "value": "={{ $json.usage.prompt_tokens }}"
+            },
+            {
+              "column": "completion_tokens",
+              "value": "={{ $json.usage.completion_tokens }}"
+            },
+            {
+              "column": "total_tokens",
+              "value": "={{ $json.usage.total_tokens }}"
+            },
+            {
+              "column": "cost",
+              "value": "={{ ($json.usage.prompt_tokens * 0.00000015) + ($json.usage.completion_tokens * 0.00000060) }}"
+            },
+            {
+              "column": "agent_name",
+              "value": "={{ $json.agent_name || 'Desconhecido' }}"
+            }
+          ]
+        }
+      },
+      "id": "InsertAIUsage",
+      "name": "InsertAIUsage",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1000,
+        240
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "8TEbcDMv4pFPkspM",
+          "name": "HUVIbase"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"success\": {{ $json.success }},\n  \"text\": \"{{ $json.text.replace(/\\n/g, '\\\\n').replace(/\"/g, '\\\\\"') }}\",\n  \"usage\": {\n    \"prompt_tokens\": {{ $json.usage.prompt_tokens }},\n    \"completion_tokens\": {{ $json.usage.completion_tokens }},\n    \"total_tokens\": {{ $json.usage.total_tokens }}\n  }\n}",
+        "options": {}
+      },
+      "id": "RespondWebhook",
+      "name": "RespondWebhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        1200,
+        240
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "PreparePayload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "PreparePayload": {
+      "main": [
+        [
+          {
+            "node": "LLMRequest",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "LLMRequest": {
+      "main": [
+        [
+          {
+            "node": "ParseResponse",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ParseResponse": {
+      "main": [
+        [
+          {
+            "node": "InsertAIUsage",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "InsertAIUsage": {
+      "main": [
+        [
+          {
+            "node": "RespondWebhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

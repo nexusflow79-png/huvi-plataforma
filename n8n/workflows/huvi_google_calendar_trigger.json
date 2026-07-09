@@ -1,0 +1,268 @@
+{
+  "name": "HUVI_Google_Calendar_Trigger",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "calendar": {
+          "__rl": true,
+          "value": "primary",
+          "mode": "list"
+        },
+        "triggerOn": "eventCreated",
+        "options": {}
+      },
+      "id": "GoogleCalendarTrigger",
+      "name": "Google Calendar Trigger",
+      "type": "n8n-nodes-base.googleCalendarTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        200,
+        240
+      ],
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "h7R1a8f9k2jL5pQw",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const event = $input.first()?.json || {};\nconst attendees = event.attendees || [];\n\n// Extrai o e-mail de um convidado que não seja o dono da agenda (tenant)\n// Geralmente é o primeiro e-mail da lista que não é o organizador\nlet guestEmail = null;\nfor (const a of attendees) {\n  if (!a.organizer && a.email) {\n    guestEmail = a.email.trim();\n    break;\n  }\n}\n\n// Se não achar nas flags de organizador, pega o primeiro que não seja o organizador\nif (!guestEmail && attendees.length > 0) {\n  guestEmail = attendees.find(a => !a.self)?.email || attendees[0].email;\n}\n\nreturn [{\n  json: {\n    guest_email: guestEmail || '',\n    event_summary: event.summary || 'Reunião Agendada',\n    event_link: event.htmlLink || '',\n    start_time: event.start?.dateTime || new Date().toISOString()\n  }\n}];"
+      },
+      "id": "ExtractGuestEmail",
+      "name": "ExtractGuestEmail",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        420,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "schema": "public",
+        "table": "opportunities",
+        "limit": 1,
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "email",
+              "condition": "eq",
+              "keyValue": "={{ $json.guest_email }}"
+            },
+            {
+              "keyName": "deleted_at",
+              "condition": "is",
+              "keyValue": "null"
+            }
+          ]
+        }
+      },
+      "id": "FindOpportunity",
+      "name": "Find Opportunity",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        640,
+        240
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "8TEbcDMv4pFPkspM",
+          "name": "HUVIbase"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "f516a249-1be8-46bf-8032-47ef5db5ccfa",
+              "leftValue": "={{ $json.id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "isNotEmpty"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "CheckLeadExists",
+      "name": "Check Lead Exists",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        860,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "schema": "public",
+        "table": "conversions",
+        "columns": "tenant_id, opportunity_id, conversion_type, expected_value, closed_value, notes, conversion_date",
+        "upsertDataUI": {
+          "upsertDataValues": [
+            {
+              "column": "tenant_id",
+              "value": "={{ $json.tenant_id }}"
+            },
+            {
+              "column": "opportunity_id",
+              "value": "={{ $json.id }}"
+            },
+            {
+              "column": "conversion_type",
+              "value": "appointment"
+            },
+            {
+              "column": "expected_value",
+              "value": "0"
+            },
+            {
+              "column": "closed_value",
+              "value": "0"
+            },
+            {
+              "column": "notes",
+              "value": "=Reunião Google Agenda agendada para: {{ $('ExtractGuestEmail').first().json.start_time }}"
+            },
+            {
+              "column": "conversion_date",
+              "value": "={{ new Date().toISOString() }}"
+            }
+          ]
+        }
+      },
+      "id": "RecordConversion",
+      "name": "Record Conversion",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1080,
+        180
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "8TEbcDMv4pFPkspM",
+          "name": "HUVIbase"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "schema": "public",
+        "table": "opportunities",
+        "updateKey": "id",
+        "updateDataUI": {
+          "updateDataValues": [
+            {
+              "column": "id",
+              "value": "={{ $('Find Opportunity').item.json.id }}"
+            },
+            {
+              "column": "status",
+              "value": "converted"
+            }
+          ]
+        }
+      },
+      "id": "UpdateOpportunityStatus",
+      "name": "Update Opportunity Status",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1300,
+        180
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "8TEbcDMv4pFPkspM",
+          "name": "HUVIbase"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Google Calendar Trigger": {
+      "main": [
+        [
+          {
+            "node": "ExtractGuestEmail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ExtractGuestEmail": {
+      "main": [
+        [
+          {
+            "node": "Find Opportunity",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find Opportunity": {
+      "main": [
+        [
+          {
+            "node": "CheckLeadExists",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CheckLeadExists": {
+      "main": [
+        [
+          {
+            "node": "RecordConversion",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "RecordConversion": {
+      "main": [
+        [
+          {
+            "node": "UpdateOpportunityStatus",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  }
+}
