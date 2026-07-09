@@ -9,6 +9,7 @@ export default function handler(req, res) {
   return res.status(200).json({
     status: 'ok',
     environment: process.env.VERCEL_ENV || 'production',
-    message: 'HUVI Admin Proxy is running'
+    message: 'HUVI Admin Proxy is running',
+    hasServiceKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY
   });
 }
