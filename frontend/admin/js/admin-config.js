@@ -14,12 +14,12 @@ const ADMIN_CONFIG = {
   PLANS: {
     free:    { label: 'Plano Gratuito (R$ 0,00 / mês)', value: 0 },
     start:   { label: 'Plano Start (R$ 49,90 / mês)',   value: 49.90 },
-    pro:     { label: 'Plano Pro (R$ 89,90 / mês)',     value: 89.90 },
+    pro:     { label: 'Plano Pro (R$ 97,00 / mês)',     value: 97.00 },
   },
 
   // ── Links Asaas ──
   ASAAS_LINK_START: 'https://www.asaas.com/c/v831fziyb1raabkm',
-  ASAAS_LINK_PRO:   'https://www.asaas.com/c/huvi-pro',
+  ASAAS_LINK_PRO:   'https://www.asaas.com/c/vfxbtmascnq5dbml',
 
   // ── Nichos ──
   NICHES: [
