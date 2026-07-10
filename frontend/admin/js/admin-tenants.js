@@ -309,49 +309,55 @@ const AdminTenants = (() => {
 
     const creditLimit = parseInt(document.getElementById('tenant-credit-limit').value) || 50;
 
-    if (id) {
-      delete payload.status;
-      delete payload.financial_status;
-      delete payload.terms_accepted;
-      const { error } = await adminSupabase.from('tenants').update(payload).eq('id', id);
-      if (error) { showToast('Erro ao atualizar', 'error'); return; }
+    try {
+      if (id) {
+        delete payload.status;
+        delete payload.financial_status;
+        delete payload.terms_accepted;
+        const { error } = await adminSupabase.from('tenants').update(payload).eq('id', id);
+        if (error) { showToast('Erro ao atualizar: ' + (error.message || error), 'error'); return; }
 
-      // Salvar créditos
-      await saveTenantCredits(id, creditLimit);
+        // Salvar créditos
+        await saveTenantCredits(id, creditLimit);
 
-      showToast('Tenant atualizado!', 'success');
-    } else {
-      const { data: newTenant, error } = await adminSupabase.from('tenants').insert(payload).select().single();
-      if (error) { showToast('Erro ao criar', 'error'); return; }
+        showToast('Tenant atualizado!', 'success');
+      } else {
+        const { data: newTenant, error } = await adminSupabase.from('tenants').insert(payload).select().single();
+        if (error) { showToast('Erro ao criar: ' + (error.message || error), 'error'); return; }
 
-      // Criar créditos para o novo tenant
-      const newId = newTenant?.id;
-      if (newId) {
-        await saveTenantCredits(newId, creditLimit);
+        // Criar créditos para o novo tenant
+        const newId = newTenant?.id;
+        if (newId) {
+          await saveTenantCredits(newId, creditLimit);
+        }
+
+        // Log
+        if (newTenant?.id) {
+          await adminSupabase.from('audit_logs').insert({
+            tenant_id: newTenant.id,
+            action: 'TENANT_CRIADO',
+            entity_type: 'tenant',
+            entity_id: newTenant.id,
+            metadata: {
+              company_name: payload.name,
+              niche: payload.niche,
+              slug: payload.slug,
+              role: 'Superadmin',
+            },
+          });
+        }
+
+        showToast('Infraestrutura criada com sucesso!', 'success');
       }
 
-      // Log
-      if (newTenant?.id) {
-        await adminSupabase.from('audit_logs').insert({
-          tenant_id: newTenant.id,
-          action: 'TENANT_CRIADO',
-          entity_type: 'tenant',
-          entity_id: newTenant.id,
-          metadata: {
-            company_name: payload.name,
-            niche: payload.niche,
-            slug: payload.slug,
-            role: 'Superadmin',
-          },
-        });
-      }
-
-      showToast('Infraestrutura criada com sucesso!', 'success');
+      closeModal();
+      load();
+    } catch (err) {
+      console.error('[HUVI ADMIN] Erro ao salvar tenant:', err);
+      showToast('Erro inesperado: ' + err.message, 'error');
     }
-
-    closeModal();
-    load();
   }
+
 
   // ── Toggle Status ──
   async function toggleStatus(id, currentStatus) {
