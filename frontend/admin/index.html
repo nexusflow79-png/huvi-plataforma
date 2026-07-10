@@ -112,14 +112,31 @@
 
         <!-- ========== PAGE: TENANTS ========== -->
         <section id="page-tenants" class="page active">
-          <div class="page-header">
-            <div class="section-header">
+          <div class="page-header" style="align-items: flex-start;">
+            <div class="section-header" style="flex: 1;">
               <h3 class="section-title">⚡ Clientes Contratantes (Tenants)</h3>
               <p class="section-subtitle">Cadastro e gerenciamento isolado de multi-empresas.</p>
             </div>
-            <button id="btn-new-tenant" class="btn btn-primary">
-              <span>+ Inserir Novo Cliente</span>
-            </button>
+            
+            <!-- Bloco de Autenticação Rápida Global -->
+            <div style="background: var(--surface-0); border: 1px solid var(--surface-300); border-radius: var(--radius-md); padding: var(--space-3); width: 340px; box-shadow: var(--shadow-sm); flex-shrink: 0;">
+              <label class="form-label" style="font-size: 11px;">Slug Rota URL</label>
+              <input type="text" id="global-quick-link-slug" class="form-input" placeholder="ex: barbearia-nexus" style="height: 32px; font-size: 12px; margin-bottom: 8px;">
+              
+              <div style="border: 1px dashed var(--border); border-radius: var(--radius-sm); padding: var(--space-2); background: var(--surface-100);">
+                <div style="display: flex; align-items: center; gap: 4px; font-weight: 600; font-size: 11px; color: var(--text-primary); margin-bottom: 6px;">
+                  🔗 Enviar Link de Autenticação
+                </div>
+                <div style="display: flex; gap: 4px; margin-bottom: 6px;">
+                  <input type="email" id="global-quick-link-email" placeholder="E-mail" class="form-input" style="font-size: 11px; padding: 4px 6px; flex: 1; height: 28px; background: var(--surface-0);">
+                  <input type="tel" id="global-quick-link-whatsapp" placeholder="WhatsApp" class="form-input" style="font-size: 11px; padding: 4px 6px; flex: 1; height: 28px; background: var(--surface-0);">
+                </div>
+                <button type="button" id="btn-global-send-access" class="btn btn-outline" style="width: 100%; font-size: 11px; padding: 4px; height: 28px; background: var(--surface-0);">Página de Autenticação</button>
+                <div id="global-quick-link-feedback" style="font-size: 10px; font-weight: 600; min-height: 12px; text-align: center; margin-top: 4px;"></div>
+              </div>
+            </div>
+
+            <button class="btn btn-primary" id="btn-new-tenant" style="flex-shrink: 0; align-self: flex-start;">+ Inserir Novo Cliente</button>
           </div>
 
           <!-- Search & Filters -->
@@ -301,24 +318,7 @@
                   </div>
                 </div>
 
-                <!-- Link de Autenticação / Pagamento -->
-                <div style="border-top:1px solid var(--surface-300); margin-top:var(--space-4); padding-top:var(--space-4);">
-                  <h4 style="font-weight:700; margin-bottom:var(--space-3); display:flex; align-items:center; gap:8px; font-size:var(--font-sm);">
-                    🔗 Enviar Link de Autenticação
-                  </h4>
-                  <div style="display: flex; flex-direction: column; gap: 4px;">
-                    <div style="display: flex; gap: var(--space-3); flex-wrap: wrap; align-items: center;">
-                      <div style="display: flex; gap: var(--space-2); align-items: center;">
-                        <input type="email" id="tenant-quick-link-email" placeholder="E-mail" style="border: 1px solid var(--border); background: var(--surface-100); font-size: var(--font-xs); width: 140px; outline: none; padding: 6px 10px; border-radius: var(--radius-sm);">
-                        <input type="tel" id="tenant-quick-link-whatsapp" placeholder="WhatsApp (55...)" style="border: 1px solid var(--border); background: var(--surface-100); font-size: var(--font-xs); width: 140px; outline: none; padding: 6px 10px; border-radius: var(--radius-sm);">
-                      </div>
-                      <div class="plan-links" style="display: flex; gap: var(--space-2);">
-                        <button type="button" id="btn-tenant-send-access" class="plan-link start" style="padding: 8px 16px; font-size: var(--font-sm); font-weight: 600; border-radius: var(--radius-sm); border: none; cursor: pointer; background: var(--primary); color: white;">Enviar Acesso</button>
-                      </div>
-                    </div>
-                    <div id="tenant-quick-link-feedback" style="font-size: 11px; font-weight: 600; min-height: 16px;"></div>
-                  </div>
-                </div>
+
 
                 <div class="modal-footer">
                   <button type="button" class="btn btn-ghost" id="cancel-tenant">Cancelar</button>

@@ -420,12 +420,12 @@ const AdminTenants = (() => {
     const resetBtn = document.getElementById('btn-reset-credits');
     if (resetBtn) resetBtn.addEventListener('click', resetTenantCredits);
     
-    // Lógica de envio rápido de link de acesso
-    function handleTenantSendAccess() {
-      const email = document.getElementById('tenant-quick-link-email')?.value.trim();
-      let whatsapp = document.getElementById('tenant-quick-link-whatsapp')?.value.trim();
-      const feedback = document.getElementById('tenant-quick-link-feedback');
-      const slug = document.getElementById('tenant-slug').value.trim();
+    // Lógica de envio rápido de link de acesso Global (fora do modal)
+    function handleGlobalSendAccess() {
+      const email = document.getElementById('global-quick-link-email')?.value.trim();
+      let whatsapp = document.getElementById('global-quick-link-whatsapp')?.value.trim();
+      const feedback = document.getElementById('global-quick-link-feedback');
+      const slug = document.getElementById('global-quick-link-slug')?.value.trim();
       
       if (!slug) {
         if (feedback) {
@@ -437,7 +437,7 @@ const AdminTenants = (() => {
 
       // Monta o link de autenticação baseado no slug
       const host = window.location.host; // ex: huvi.nexus-flow.tech
-      const link = `https://${host}/${slug}/login`; // Ajuste a URL conforme a rota real do seu frontend
+      const link = `https://${host}/${slug}/login`;
       
       const showFeedback = (msg, isError = false) => {
         if (feedback) {
@@ -466,7 +466,7 @@ const AdminTenants = (() => {
       }
     }
 
-    document.getElementById('btn-tenant-send-access')?.addEventListener('click', handleTenantSendAccess);
+    document.getElementById('btn-global-send-access')?.addEventListener('click', handleGlobalSendAccess);
 
     setupSearch();
   }
