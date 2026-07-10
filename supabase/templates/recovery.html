@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { font-family: 'Inter', Arial, sans-serif; background-color: #f8fafc; margin: 0; padding: 0; }
+    .container { max-width: 600px; margin: 40px auto; background: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+    .header { background: #f97316; padding: 32px; text-align: center; }
+    .header h1 { color: #ffffff; margin: 0; font-size: 28px; font-weight: 800; letter-spacing: -1px; }
+    .content { padding: 40px; color: #334155; }
+    .content h2 { margin-top: 0; color: #0f172a; font-size: 22px; }
+    .content p { line-height: 1.6; font-size: 16px; margin-bottom: 24px; }
+    .button { display: inline-block; background-color: #f97316; color: #ffffff; text-decoration: none; padding: 14px 28px; border-radius: 8px; font-weight: 600; font-size: 16px; margin-bottom: 24px; }
+    .footer { background: #f1f5f9; padding: 24px; text-align: center; color: #64748b; font-size: 14px; }
+    .url-fallback { word-break: break-all; color: #2563eb; font-size: 14px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>HUVI</h1>
+    </div>
+    <div class="content">
+      <h2>Recuperação de Acesso</h2>
+      <p>Olá,</p>
+      <p>Recebemos uma solicitação para redefinir a senha da sua conta no HUVI. Se foi você, clique no botão abaixo para criar uma nova senha de forma segura.</p>
+      <p style="text-align: center;">
+        <a href="{{ .ConfirmationURL }}" class="button" style="color: #ffffff;">Redefinir Senha</a>
+      </p>
+      <p>Se o botão acima não funcionar, copie e cole este link no seu navegador:</p>
+      <p class="url-fallback">{{ .ConfirmationURL }}</p>
+      <p>Bora vender!</p>
+      <p><strong>Equipe HUVI</strong></p>
+    </div>
+    <div class="footer">
+      Você está recebendo este e-mail porque solicitou a recuperação de senha da sua conta no HUVI.<br>
+      Se não foi você, não se preocupe, nenhuma alteração foi feita e você pode ignorar esta mensagem.
+    </div>
+  </div>
+</body>
+</html>
