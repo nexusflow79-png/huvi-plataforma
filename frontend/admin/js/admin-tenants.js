@@ -419,6 +419,55 @@ const AdminTenants = (() => {
     document.getElementById('tenant-form').addEventListener('submit', save);
     const resetBtn = document.getElementById('btn-reset-credits');
     if (resetBtn) resetBtn.addEventListener('click', resetTenantCredits);
+    
+    // Lógica de envio rápido de link de acesso
+    function handleTenantSendAccess() {
+      const email = document.getElementById('tenant-quick-link-email')?.value.trim();
+      let whatsapp = document.getElementById('tenant-quick-link-whatsapp')?.value.trim();
+      const feedback = document.getElementById('tenant-quick-link-feedback');
+      const slug = document.getElementById('tenant-slug').value.trim();
+      
+      if (!slug) {
+        if (feedback) {
+          feedback.textContent = 'Preencha o Slug Rota URL primeiro!';
+          feedback.style.color = 'var(--error)';
+        }
+        return;
+      }
+
+      // Monta o link de autenticação baseado no slug
+      const host = window.location.host; // ex: huvi.nexus-flow.tech
+      const link = `https://${host}/${slug}/login`; // Ajuste a URL conforme a rota real do seu frontend
+      
+      const showFeedback = (msg, isError = false) => {
+        if (feedback) {
+          feedback.textContent = msg;
+          feedback.style.color = isError ? 'var(--error)' : 'var(--success)';
+          setTimeout(() => { feedback.textContent = ''; }, 4000);
+        }
+      };
+      
+      if (whatsapp) {
+        whatsapp = whatsapp.replace(/\D/g, ''); // Limpa formatações
+        const msg = encodeURIComponent(`Olá! Segue o link para o seu primeiro acesso ao painel HUVI:\n\n${link}`);
+        window.open(`https://wa.me/${whatsapp}?text=${msg}`, '_blank');
+        showFeedback('✓ WhatsApp aberto com sucesso!');
+      } else if (email) {
+        const subject = encodeURIComponent('HUVI - Seu Link de Acesso');
+        const body = encodeURIComponent(`Olá!\n\nSegue o link para o seu primeiro acesso ao painel HUVI:\n\n${link}`);
+        
+        const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${email}&su=${subject}&body=${body}`;
+        window.open(gmailUrl, '_blank');
+        
+        showFeedback('✓ Janela do Gmail aberta com sucesso!');
+      } else {
+        window.open(link, '_blank');
+        showFeedback('✓ Link de acesso aberto!', false);
+      }
+    }
+
+    document.getElementById('btn-tenant-send-access')?.addEventListener('click', handleTenantSendAccess);
+
     setupSearch();
   }
 
