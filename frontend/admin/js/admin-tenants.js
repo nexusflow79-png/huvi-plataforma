@@ -321,7 +321,7 @@ const AdminTenants = (() => {
 
       showToast('Tenant atualizado!', 'success');
     } else {
-      const { data: newTenant, error } = await adminSupabase.from('tenants').insert(payload);
+      const { data: newTenant, error } = await adminSupabase.from('tenants').insert(payload).select().single();
       if (error) { showToast('Erro ao criar', 'error'); return; }
 
       // Criar créditos para o novo tenant
@@ -331,13 +331,20 @@ const AdminTenants = (() => {
       }
 
       // Log
-      await adminSupabase.from('audit_logs').insert({
-        tenant_slug: payload.slug,
-        role: 'Superadmin',
-        type: 'TENANT_CRIADO',
-        detail: JSON.stringify({ niche: payload.niche, company_name: payload.name }),
-        created_at: new Date().toISOString(),
-      });
+      if (newTenant?.id) {
+        await adminSupabase.from('audit_logs').insert({
+          tenant_id: newTenant.id,
+          action: 'TENANT_CRIADO',
+          entity_type: 'tenant',
+          entity_id: newTenant.id,
+          metadata: {
+            company_name: payload.name,
+            niche: payload.niche,
+            slug: payload.slug,
+            role: 'Superadmin',
+          },
+        });
+      }
 
       showToast('Infraestrutura criada com sucesso!', 'success');
     }
