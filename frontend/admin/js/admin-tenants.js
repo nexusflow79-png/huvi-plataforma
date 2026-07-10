@@ -435,19 +435,31 @@ const AdminTenants = (() => {
         return;
       }
 
-      // Monta o link de autenticação baseado no slug
+      // Monta o link de autenticação usando query params para evitar Erro 404 de pastas inexistentes
       const host = window.location.host; // ex: huvi.nexus-flow.tech
-      const link = `https://${host}/${slug}/login`;
+      const link = `https://${host}/?tenant=${slug}`;
       
       const showFeedback = (msg, isError = false) => {
         if (feedback) {
           feedback.textContent = msg;
           feedback.style.color = isError ? 'var(--error)' : 'var(--success)';
-          setTimeout(() => { feedback.textContent = ''; }, 4000);
+          setTimeout(() => { feedback.textContent = ''; }, 4500);
         }
       };
       
-      if (whatsapp) {
+      if (whatsapp && email) {
+        // Se ambos foram preenchidos
+        whatsapp = whatsapp.replace(/\D/g, '');
+        const msg = encodeURIComponent(`Olá! Segue o link para o seu primeiro acesso ao painel HUVI:\n\n${link}`);
+        window.open(`https://wa.me/${whatsapp}?text=${msg}`, '_blank');
+        
+        const subject = encodeURIComponent('HUVI - Seu Link de Acesso');
+        const body = encodeURIComponent(`Olá!\n\nSegue o link para o seu primeiro acesso ao painel HUVI:\n\n${link}`);
+        const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${email}&su=${subject}&body=${body}`;
+        
+        setTimeout(() => window.open(gmailUrl, '_blank'), 200);
+        showFeedback('✓ Janelas abertas (Email pode ser bloqueado por popup blocker).');
+      } else if (whatsapp) {
         whatsapp = whatsapp.replace(/\D/g, ''); // Limpa formatações
         const msg = encodeURIComponent(`Olá! Segue o link para o seu primeiro acesso ao painel HUVI:\n\n${link}`);
         window.open(`https://wa.me/${whatsapp}?text=${msg}`, '_blank');
@@ -458,7 +470,6 @@ const AdminTenants = (() => {
         
         const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${email}&su=${subject}&body=${body}`;
         window.open(gmailUrl, '_blank');
-        
         showFeedback('✓ Janela do Gmail aberta com sucesso!');
       } else {
         window.open(link, '_blank');
