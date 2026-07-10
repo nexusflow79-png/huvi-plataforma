@@ -94,7 +94,7 @@ const AdminTenants = (() => {
     document.getElementById('tenant-edit-id').value = '';
 
     // Reset credit fields
-    document.getElementById('tenant-credit-limit').value = 80;
+    document.getElementById('tenant-credit-limit').value = 50;
     document.getElementById('tenant-credit-used').value = 0;
     document.getElementById('tenant-credit-start').value = '';
     document.getElementById('tenant-credit-reset').value = '';
@@ -167,7 +167,7 @@ const AdminTenants = (() => {
       .single();
 
     if (credits) {
-      document.getElementById('tenant-credit-limit').value = credits.opportunity_limit || 80;
+      document.getElementById('tenant-credit-limit').value = credits.opportunity_limit || 50;
       document.getElementById('tenant-credit-used').value = credits.opportunity_used || 0;
       if (credits.cycle_start_at) {
         document.getElementById('tenant-credit-start').value = new Date(credits.cycle_start_at).toLocaleDateString('pt-BR');
@@ -254,7 +254,7 @@ const AdminTenants = (() => {
         })
         .eq('tenant_id', tenantId);
     } else {
-      const limit = parseInt(document.getElementById('tenant-credit-limit').value) || 80;
+      const limit = parseInt(document.getElementById('tenant-credit-limit').value) || 50;
       await adminSupabase
         .from('tenant_credits')
         .insert({
@@ -307,7 +307,7 @@ const AdminTenants = (() => {
       return;
     }
 
-    const creditLimit = parseInt(document.getElementById('tenant-credit-limit').value) || 80;
+    const creditLimit = parseInt(document.getElementById('tenant-credit-limit').value) || 50;
 
     if (id) {
       delete payload.status;
