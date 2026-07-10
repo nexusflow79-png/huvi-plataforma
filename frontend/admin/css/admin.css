@@ -184,13 +184,14 @@ a:hover { color: var(--mono-800); }
 }
 
 .logo-text {
-  font-size: 2.25rem;
-  font-weight: 800;
-  background: linear-gradient(135deg, #f47001, #f68c33);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  font-size: 2.8rem;
+  font-family: 'Arial Black', Impact, sans-serif;
+  font-weight: 900;
+  color: #f47001;
   letter-spacing: -1px;
+  line-height: 1;
+  margin: 0;
+  text-transform: uppercase;
 }
 
 .auth-tagline {
