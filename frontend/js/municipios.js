@@ -1,8 +1,7 @@
 /**
  * HUVI — Lista Completa de Municípios Brasileiros por UF
- * Gerado automaticamente a partir da BrasilAPI
  */
-const MUNICIPIOS = {
+window.MUNICIPIOS = {
   "AC": [
     "Acrelândia",
     "Assis Brasil",

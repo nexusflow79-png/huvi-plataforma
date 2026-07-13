@@ -212,8 +212,8 @@ const Discovery = (() => {
       zoneSelect.disabled = true;
     }
 
-    if (selectedState && typeof MUNICIPIOS !== 'undefined' && MUNICIPIOS[selectedState]) {
-      MUNICIPIOS[selectedState].forEach(city => {
+    if (selectedState && typeof window.MUNICIPIOS !== 'undefined' && window.MUNICIPIOS[selectedState]) {
+      window.MUNICIPIOS[selectedState].forEach(city => {
         const opt = document.createElement('option');
         opt.value = city;
         opt.textContent = city;

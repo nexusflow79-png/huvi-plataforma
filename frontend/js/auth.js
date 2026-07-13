@@ -25,7 +25,7 @@ const Auth = (() => {
   // Toast
   function showAuthToast(message, type = 'info') {
     authToast.textContent = message;
-    authToast.className = `toast ${type}`;
+    authToast.className = `toast toast-${type}`;
     authToast.classList.remove('hidden');
     setTimeout(() => authToast.classList.add('hidden'), 4000);
   }
@@ -53,7 +53,7 @@ const Auth = (() => {
 
   // Tradução de Erros Supabase
   function translateAuthError(message) {
-    if (!message) return '';
+    if (!message || message === '{}') return '';
     const msg = message.toLowerCase();
     if (msg.includes('user already registered')) return 'Este e-mail já está cadastrado.';
     if (msg.includes('invalid login credentials')) return 'E-mail ou senha incorretos.';

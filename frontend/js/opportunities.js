@@ -196,8 +196,8 @@ const Opportunities = (() => {
     let cities = [];
 
     if (selectedState) {
-      if (typeof MUNICIPIOS !== 'undefined' && MUNICIPIOS[selectedState]) {
-        cities = MUNICIPIOS[selectedState];
+      if (typeof window.MUNICIPIOS !== 'undefined' && window.MUNICIPIOS[selectedState]) {
+        cities = window.MUNICIPIOS[selectedState];
       } else {
         const oppsForCityFilter = allOpps.filter(opp => opp.state && opp.state.toUpperCase() === selectedState.toUpperCase());
         cities = [...new Set(oppsForCityFilter.map(opp => opp.city).filter(Boolean))];
