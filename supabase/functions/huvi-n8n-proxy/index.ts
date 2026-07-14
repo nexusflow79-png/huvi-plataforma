@@ -101,14 +101,18 @@ serve(async (req: Request) => {
     // Opcionalmente no futuro, podemos passar um header de autorização "N8N_SECRET_KEY" aqui
     // const n8nSecret = Deno.env.get("N8N_SECRET_KEY") ?? "";
 
+    const n8nController = new AbortController();
+    const n8nTimeout = setTimeout(() => n8nController.abort(), 25000);
+
     const n8nResponse = await fetch(n8nWebhookUrl, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         // "Authorization": `Bearer ${n8nSecret}`, // Descomente quando configurar auth no Webhook do n8n
       },
-      body: JSON.stringify(securePayload)
-    });
+      body: JSON.stringify(securePayload),
+      signal: n8nController.signal
+    }).finally(() => clearTimeout(n8nTimeout));
 
     let n8nData;
     try {
