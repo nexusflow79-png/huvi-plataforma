@@ -196,10 +196,17 @@ const Settings = (() => {
 
     try {
       // Chama o Webhook do n8n (que atua como Proxy para a Evolution API)
-      const res = await fetch(HUVI_CONFIG.N8N_WEBHOOKS.WHATSAPP_CONNECT, {
+      const session = (await supabase.auth.getSession()).data.session;
+      const res = await fetch(`${HUVI_CONFIG.SUPABASE_URL}${HUVI_CONFIG.N8N_PROXY}`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone: phoneInput, instanceName: 'HUVI' })
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.access_token || ''}`
+        },
+        body: JSON.stringify({ 
+          target: HUVI_CONFIG.N8N_WEBHOOKS_TARGETS.WHATSAPP_CONNECT,
+          payload: { phone: phoneInput, instanceName: 'HUVI' }
+        })
       });
 
       if (!res.ok) throw new Error('Erro na comunicação com o servidor');
