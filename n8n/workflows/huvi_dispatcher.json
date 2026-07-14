@@ -207,6 +207,57 @@
       "onError": "continueRegularOutput"
     },
     {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "operation": "contains",
+              "value1": "={{ $('SendWhatsApp').first().error ? JSON.stringify($('SendWhatsApp').first().error) : '' }}",
+              "value2": "exists\":false"
+            },
+            {
+              "operation": "equal",
+              "value1": "={{ String($('MergeData').first().json.phone || '').replace(/\\D/g, '').length }}",
+              "value2": "13"
+            }
+          ]
+        }
+      },
+      "id": "b2832852-bb36-4246-8863-597e640a13b7",
+      "name": "Check_9th_Digit",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        4224,
+        1376
+      ]
+    },
+    {
+      "credentials": {
+        "evolutionApi": {
+          "id": "IMWdDECSPHovAleD",
+          "name": "HUVI_Evolution_WhatsApp"
+        }
+      },
+      "id": "SendWhatsApp_Retry",
+      "name": "SendWhatsApp_Retry",
+      "type": "n8n-nodes-evolution-api.evolutionApi",
+      "typeVersion": 1,
+      "parameters": {
+        "resource": "messages-api",
+        "operation": "send-text",
+        "instanceName": "={{ $('MergeData').first().json.evolution_instance }}",
+        "remoteJid": "={{ (() => { let num = String($('MergeData').first().json.phone || '').replace(/\\D/g, ''); if (num.length === 11) { num = num.substring(0,2) + num.substring(3); } return '55' + num; })() }}@s.whatsapp.net",
+        "messageText": "={{ $('MergeData').first().json.message }}",
+        "options_message": {}
+      },
+      "position": [
+        2000,
+        -50
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
       "credentials": {
         "smtp": {
           "id": "Z5CBLF6xcJmHZmzq",
@@ -384,6 +435,35 @@
   },
   "connections": {
     "SendWhatsApp": {
+      "main": [
+        [
+          {
+            "index": 0,
+            "node": "Check_9th_Digit",
+            "type": "main"
+          }
+        ]
+      ]
+    },
+    "Check_9th_Digit": {
+      "main": [
+        [
+          {
+            "index": 0,
+            "node": "SendWhatsApp_Retry",
+            "type": "main"
+          }
+        ],
+        [
+          {
+            "index": 0,
+            "node": "PrepareDispatchLog",
+            "type": "main"
+          }
+        ]
+      ]
+    },
+    "SendWhatsApp_Retry": {
       "main": [
         [
           {

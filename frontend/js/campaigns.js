@@ -228,7 +228,7 @@ const Campaigns = (() => {
       tabsHeader.querySelectorAll('.tab-btn').forEach(btn => {
         btn.addEventListener('click', () => {
           // Apenas permite salvar o estado anterior se NÃO estiver travado
-          const isLocked = ['sending', 'sent', 'cancelled'].includes(camp.status);
+          const isLocked = ['sent', 'cancelled'].includes(camp.status);
           if (!isLocked) {
             saveCurrentStepData();
           }
@@ -298,7 +298,7 @@ const Campaigns = (() => {
 
       tabsHeader.querySelectorAll('.tab-btn').forEach(btn => {
         btn.addEventListener('click', () => {
-          const isLocked = ['sending', 'sent', 'cancelled'].includes(camp.status);
+          const isLocked = ['sent', 'cancelled'].includes(camp.status);
           if (!isLocked) {
             saveCurrentStepData();
           }
@@ -316,7 +316,7 @@ const Campaigns = (() => {
     const btnSend = document.getElementById('btn-send-camp');
     
     // Se já estiver enviada ou enviando, não permite editar nem aprovar
-    const isLocked = ['sending', 'sent', 'cancelled'].includes(camp.status);
+    const isLocked = ['sent', 'cancelled'].includes(camp.status);
     document.getElementById('camp-msg-subject').disabled = isLocked;
     document.getElementById('camp-msg-body').disabled = isLocked;
     if (channelSelect) channelSelect.disabled = isLocked;
@@ -326,7 +326,7 @@ const Campaigns = (() => {
       btnApprove.classList.add('hidden');
       btnSaveDraft.classList.add('hidden');
       btnSend.classList.add('hidden');
-    } else if (camp.status === 'approved') {
+    } else if (camp.status === 'approved' || camp.status === 'sending') {
       // Campanha aprovada: pode editar, re-aprovar e ENVIAR
       btnApprove.classList.remove('hidden');
       btnApprove.textContent = 'Salvar Altera\u00e7\u00f5es';
@@ -368,9 +368,9 @@ const Campaigns = (() => {
         return false;
       }
 
-      // Proteção: não reenviar se já está enviando ou enviada
-      if (['sending', 'sent'].includes(camp.status)) {
-        showToast('Esta campanha j\u00e1 foi enviada ou est\u00e1 sendo enviada.', 'info');
+      // Proteção: não reenviar se já enviada; permite reenvio se travada em 'sending'
+      if (camp.status === 'sent') {
+        showToast('Esta campanha j\u00e1 foi enviada.', 'info');
         return false;
       }
 
@@ -427,9 +427,9 @@ const Campaigns = (() => {
 
       // 5. Disparar webhook para o n8n
       console.log('[HUVI] Disparando webhook do n8n Dispatcher ID:', camp?.id);
-      
+
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 12000);
+      const timeoutId = setTimeout(() => controller.abort(), 120000);
 
       let dispatchSuccess = false;
       try {
@@ -447,7 +447,7 @@ const Campaigns = (() => {
           signal: controller.signal
         });
         clearTimeout(timeoutId);
-        
+
         if (response.ok) {
           dispatchSuccess = true;
         } else {
@@ -459,32 +459,40 @@ const Campaigns = (() => {
         showToast('Falha de comunica\u00e7\u00e3o com o servidor de disparo.', 'error');
       }
 
-      // 6. Aguardar o n8n processar e atualizar status final
+      // 6. Polling do status real no banco (atualizado pelo n8n)
       if (dispatchSuccess) {
-        // Dar tempo para o n8n completar o fluxo e atualizar o status no banco
-        showToast('Mensagem enviada! Atualizando status...', 'info');
-        await new Promise(r => setTimeout(r, 4000));
-        
-        // Ler o status REAL do banco (atualizado pelo n8n)
-        const { data: updatedCamp } = await supabase
-          .from('campaigns')
-          .select('status, current_step')
-          .eq('id', id)
-          .single();
-        
-        if (updatedCamp) {
-          const finalStatus = updatedCamp.status;
-          if (finalStatus === 'sent') {
-            showToast('Campanha enviada com sucesso! Todos os passos conclu\u00eddos.', 'success');
-          } else if (finalStatus === 'approved') {
-            showToast(`Passo ${(updatedCamp.current_step || 1) - 1} enviado! Pr\u00f3ximo follow-up agendado.`, 'success');
-          } else if (finalStatus === 'failed') {
-            showToast('Falha no envio da campanha.', 'error');
-          } else {
-            showToast('Campanha processada.', 'success');
+        showToast('Mensagem enviada! Aguardando confirma\u00e7\u00e3o...', 'info');
+
+        let finalStatus = 'sending';
+        let currentStep = 1;
+        const maxAttempts = 20;
+        for (let attempt = 0; attempt < maxAttempts; attempt++) {
+          await new Promise(r => setTimeout(r, 3000));
+          const { data: updatedCamp } = await supabase
+            .from('campaigns')
+            .select('status, current_step')
+            .eq('id', id)
+            .single();
+
+          if (updatedCamp) {
+            finalStatus = updatedCamp.status;
+            currentStep = updatedCamp.current_step || 1;
+            if (['sent', 'failed', 'approved'].includes(finalStatus)) break;
           }
+        }
+
+        if (finalStatus === 'sent') {
+          showToast('Campanha enviada com sucesso! Todos os passos conclu\u00eddos.', 'success');
+        } else if (finalStatus === 'approved') {
+          showToast(`Passo ${currentStep - 1} enviado! Pr\u00f3ximo follow-up agendado.`, 'success');
+        } else if (finalStatus === 'failed') {
+          showToast('Falha no envio da campanha.', 'error');
         } else {
-          showToast('Campanha enviada com sucesso!', 'success');
+          await supabase
+            .from('campaigns')
+            .update({ status: 'failed' })
+            .eq('id', id);
+          showToast('Tempo limite excedido. Envio marcado como falha.', 'error');
         }
       } else {
         await supabase
@@ -637,7 +645,7 @@ const Campaigns = (() => {
 
     listEl.innerHTML = campaigns.map(c => {
       const isDraft = c.status === 'draft';
-      const isLocked = ['sending', 'sent', 'cancelled'].includes(c.status);
+      const isLocked = ['sent', 'cancelled'].includes(c.status);
       
       let statusLabel = STATUS_LABELS[c.status] || c.status;
 

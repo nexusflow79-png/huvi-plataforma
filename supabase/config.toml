@@ -246,11 +246,11 @@ sender_name = "Equipe HUVI"
 # Customize email templates
 [auth.email.template.confirmation]
 subject = "Ative sua conta no HUVI"
-content_path = "./templates/confirm_signup.html"
+content_path = "./supabase/templates/confirm_signup.html"
 
 [auth.email.template.recovery]
 subject = "Redefinir senha da conta HUVI"
-content_path = "./templates/recovery.html"
+content_path = "./supabase/templates/recovery.html"
 
 [auth.sms]
 # Allow/disallow new user signups via SMS to your project.
