@@ -156,6 +156,19 @@ const Campaigns = (() => {
     
     // Ocultar assunto se for WhatsApp
     const subjectGroup = document.getElementById('camp-msg-subject-group');
+    const channelSelect = document.getElementById('camp-msg-channel');
+
+    if (channelSelect) {
+      channelSelect.value = camp.channel || 'whatsapp';
+      channelSelect.onchange = (e) => {
+        if (e.target.value === 'whatsapp') {
+          subjectGroup.classList.add('hidden');
+        } else {
+          subjectGroup.classList.remove('hidden');
+        }
+      };
+    }
+
     if (camp.channel === 'whatsapp') {
       subjectGroup.classList.add('hidden');
     } else {
@@ -285,6 +298,7 @@ const Campaigns = (() => {
     const isLocked = ['sending', 'sent', 'cancelled'].includes(camp.status);
     document.getElementById('camp-msg-subject').disabled = isLocked;
     document.getElementById('camp-msg-body').disabled = isLocked;
+    if (channelSelect) channelSelect.disabled = isLocked;
 
     if (isLocked) {
       btnApprove.classList.add('hidden');
@@ -461,7 +475,7 @@ const Campaigns = (() => {
     }
   }
 
-  async function updateCampaignStatusAndCopy(id, status, subject, message) {
+  async function updateCampaignStatusAndCopy(id, status, channel, subject, message) {
     saveCurrentStepData();
 
     const hasMatrix = Array.isArray(tempMessagesMatrix) && tempMessagesMatrix.length > 0;
@@ -479,6 +493,7 @@ const Campaigns = (() => {
     // Salvar a copy e o status (sem disparar envio)
     const payload = {
       status,
+      channel,
       subject: finalSubject || null,
       message: finalMessage || null,
       messages_matrix: matrixPayload || null
@@ -734,17 +749,19 @@ const Campaigns = (() => {
     // Salvar Rascunho
     document.getElementById('btn-save-draft-camp').addEventListener('click', () => {
       const id = document.getElementById('camp-msg-id').value;
+      const channel = document.getElementById('camp-msg-channel').value;
       const subject = document.getElementById('camp-msg-subject').value.trim();
       const message = document.getElementById('camp-msg-body').value.trim();
-      updateCampaignStatusAndCopy(id, 'draft', subject, message);
+      updateCampaignStatusAndCopy(id, 'draft', channel, subject, message);
     });
 
     // Aprovar Campanha (salva sem enviar)
     document.getElementById('btn-approve-camp').addEventListener('click', () => {
       const id = document.getElementById('camp-msg-id').value;
+      const channel = document.getElementById('camp-msg-channel').value;
       const subject = document.getElementById('camp-msg-subject').value.trim();
       const message = document.getElementById('camp-msg-body').value.trim();
-      updateCampaignStatusAndCopy(id, 'approved', subject, message);
+      updateCampaignStatusAndCopy(id, 'approved', channel, subject, message);
     });
 
     // Enviar Agora (dispara o webhook)
@@ -752,9 +769,10 @@ const Campaigns = (() => {
       const id = document.getElementById('camp-msg-id').value;
       if (!confirm('Confirma o envio desta campanha para o lead?')) return;
       // Salvar alterações pendentes antes de enviar
+      const channel = document.getElementById('camp-msg-channel').value;
       const subject = document.getElementById('camp-msg-subject').value.trim();
       const message = document.getElementById('camp-msg-body').value.trim();
-      await updateCampaignStatusAndCopy(id, 'approved', subject, message);
+      await updateCampaignStatusAndCopy(id, 'approved', channel, subject, message);
       const ok = await executeDispatchWorkflow(id);
       if (ok) {
         closeModal();

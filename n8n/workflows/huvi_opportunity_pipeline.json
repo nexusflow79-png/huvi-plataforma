@@ -29,26 +29,6 @@
       "typeVersion": 1
     },
     {
-      "id": "schedule-trigger",
-      "name": "ScheduleTrigger",
-      "parameters": {
-        "rule": {
-          "interval": [
-            {
-              "field": "hours",
-              "hoursInterval": 1
-            }
-          ]
-        }
-      },
-      "position": [
-        100,
-        80
-      ],
-      "type": "n8n-nodes-base.scheduleTrigger",
-      "typeVersion": 1.1
-    },
-    {
       "credentials": {
         "supabaseApi": {
           "id": "8TEbcDMv4pFPkspM",
@@ -931,17 +911,6 @@
           {
             "index": 0,
             "node": "SupabaseInsertStrategy",
-            "type": "main"
-          }
-        ]
-      ]
-    },
-    "ScheduleTrigger": {
-      "main": [
-        [
-          {
-            "index": 0,
-            "node": "FetchTenantOffer",
             "type": "main"
           }
         ]
