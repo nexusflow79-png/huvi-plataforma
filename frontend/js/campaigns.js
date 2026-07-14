@@ -433,10 +433,17 @@ const Campaigns = (() => {
 
       let dispatchSuccess = false;
       try {
-        const response = await fetch(HUVI_CONFIG.N8N_WEBHOOKS.DISPATCHER, {
+        const session = (await supabase.auth.getSession()).data.session;
+        const response = await fetch(`${HUVI_CONFIG.SUPABASE_URL}${HUVI_CONFIG.N8N_PROXY}`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(camp),
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session?.access_token || ''}`
+          },
+          body: JSON.stringify({
+            target: HUVI_CONFIG.N8N_WEBHOOKS_TARGETS.DISPATCHER,
+            payload: camp
+          }),
           signal: controller.signal
         });
         clearTimeout(timeoutId);
