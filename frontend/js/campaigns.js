@@ -157,14 +157,35 @@ const Campaigns = (() => {
     // Ocultar assunto se for WhatsApp
     const subjectGroup = document.getElementById('camp-msg-subject-group');
     const channelSelect = document.getElementById('camp-msg-channel');
+    const targetInput = document.getElementById('camp-msg-target');
+    const opp = camp.opportunities || {};
 
     if (channelSelect) {
       channelSelect.value = camp.channel || 'whatsapp';
+      
+      if (targetInput) {
+        if (channelSelect.value === 'whatsapp') {
+          targetInput.value = opp.phone || '';
+          targetInput.placeholder = 'Ex: 11999999999';
+        } else {
+          targetInput.value = opp.email || '';
+          targetInput.placeholder = 'Ex: contato@empresa.com.br';
+        }
+      }
+
       channelSelect.onchange = (e) => {
         if (e.target.value === 'whatsapp') {
           subjectGroup.classList.add('hidden');
+          if (targetInput) {
+            targetInput.value = opp.phone || '';
+            targetInput.placeholder = 'Ex: 11999999999';
+          }
         } else {
           subjectGroup.classList.remove('hidden');
+          if (targetInput) {
+            targetInput.value = opp.email || '';
+            targetInput.placeholder = 'Ex: contato@empresa.com.br';
+          }
         }
       };
     }
@@ -299,6 +320,7 @@ const Campaigns = (() => {
     document.getElementById('camp-msg-subject').disabled = isLocked;
     document.getElementById('camp-msg-body').disabled = isLocked;
     if (channelSelect) channelSelect.disabled = isLocked;
+    if (targetInput) targetInput.disabled = isLocked;
 
     if (isLocked) {
       btnApprove.classList.add('hidden');
@@ -475,8 +497,21 @@ const Campaigns = (() => {
     }
   }
 
-  async function updateCampaignStatusAndCopy(id, status, channel, subject, message) {
+  async function updateCampaignStatusAndCopy(id, status, channel, targetValue, subject, message) {
     saveCurrentStepData();
+
+    // Atualizar telefone ou email na oportunidade se houver valor
+    if (currentCampaign && currentCampaign.opportunity_id && targetValue) {
+      const oppUpdate = channel === 'whatsapp' ? { phone: targetValue } : { email: targetValue };
+      const { error: oppErr } = await supabase.from('opportunities').update(oppUpdate).eq('id', currentCampaign.opportunity_id);
+      if (oppErr) {
+        console.warn('[HUVI] Erro ao atualizar contato na oportunidade:', oppErr);
+      } else if (currentCampaign.opportunities) {
+        // Atualiza a cache local
+        if (channel === 'whatsapp') currentCampaign.opportunities.phone = targetValue;
+        else currentCampaign.opportunities.email = targetValue;
+      }
+    }
 
     const hasMatrix = Array.isArray(tempMessagesMatrix) && tempMessagesMatrix.length > 0;
     const matrixPayload = hasMatrix ? tempMessagesMatrix : null;
@@ -750,18 +785,20 @@ const Campaigns = (() => {
     document.getElementById('btn-save-draft-camp').addEventListener('click', () => {
       const id = document.getElementById('camp-msg-id').value;
       const channel = document.getElementById('camp-msg-channel').value;
+      const targetValue = document.getElementById('camp-msg-target') ? document.getElementById('camp-msg-target').value.trim() : '';
       const subject = document.getElementById('camp-msg-subject').value.trim();
       const message = document.getElementById('camp-msg-body').value.trim();
-      updateCampaignStatusAndCopy(id, 'draft', channel, subject, message);
+      updateCampaignStatusAndCopy(id, 'draft', channel, targetValue, subject, message);
     });
 
     // Aprovar Campanha (salva sem enviar)
     document.getElementById('btn-approve-camp').addEventListener('click', () => {
       const id = document.getElementById('camp-msg-id').value;
       const channel = document.getElementById('camp-msg-channel').value;
+      const targetValue = document.getElementById('camp-msg-target') ? document.getElementById('camp-msg-target').value.trim() : '';
       const subject = document.getElementById('camp-msg-subject').value.trim();
       const message = document.getElementById('camp-msg-body').value.trim();
-      updateCampaignStatusAndCopy(id, 'approved', channel, subject, message);
+      updateCampaignStatusAndCopy(id, 'approved', channel, targetValue, subject, message);
     });
 
     // Enviar Agora (dispara o webhook)
@@ -770,9 +807,10 @@ const Campaigns = (() => {
       if (!confirm('Confirma o envio desta campanha para o lead?')) return;
       // Salvar alterações pendentes antes de enviar
       const channel = document.getElementById('camp-msg-channel').value;
+      const targetValue = document.getElementById('camp-msg-target') ? document.getElementById('camp-msg-target').value.trim() : '';
       const subject = document.getElementById('camp-msg-subject').value.trim();
       const message = document.getElementById('camp-msg-body').value.trim();
-      await updateCampaignStatusAndCopy(id, 'approved', channel, subject, message);
+      await updateCampaignStatusAndCopy(id, 'approved', channel, targetValue, subject, message);
       const ok = await executeDispatchWorkflow(id);
       if (ok) {
         closeModal();

@@ -1463,12 +1463,18 @@
                 </div>
               </div>
 
-              <div class="form-group" id="camp-msg-channel-group">
-                <label class="form-label" for="camp-msg-channel">Canal de Envio</label>
-                <select id="camp-msg-channel" class="form-input">
-                  <option value="whatsapp">💬 WhatsApp</option>
-                  <option value="email">✉️ E-mail</option>
-                </select>
+              <div class="form-group" id="camp-msg-channel-group" style="display: flex; gap: var(--space-3); flex-wrap: wrap;">
+                <div style="flex: 1; min-width: 150px;">
+                  <label class="form-label" for="camp-msg-channel">Canal de Envio</label>
+                  <select id="camp-msg-channel" class="form-input">
+                    <option value="whatsapp">💬 WhatsApp</option>
+                    <option value="email">✉️ E-mail</option>
+                  </select>
+                </div>
+                <div style="flex: 2; min-width: 250px;">
+                  <label class="form-label" for="camp-msg-target">Destino (E-mail ou WhatsApp)</label>
+                  <input type="text" id="camp-msg-target" class="form-input" placeholder="Digite o e-mail ou telefone...">
+                </div>
               </div>
 
               <div class="form-group" id="camp-msg-subject-group">
