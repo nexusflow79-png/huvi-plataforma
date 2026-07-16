@@ -248,7 +248,21 @@ function initAdminClient() {
       var config = JSON.parse(xhr.responseText);
       if (config.hasServiceKey) {
         adminSupabase = {
-          from(table) { return new AdminProxyQueryBuilder(table); }
+          from(table) { return new AdminProxyQueryBuilder(table); },
+          async changeTenantPassword(payload) {
+            const token = AdminSafeStorage.get('huvi_admin_session_token');
+            const res = await fetch('/api/admin-supabase', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token || ''}`,
+              },
+              body: JSON.stringify({ operation: 'change_tenant_password', payload }),
+            });
+            const result = await res.json();
+            if (result.error) return { data: null, error: result.error };
+            return { data: result.data, error: null };
+          }
         };
         console.log('[HUVI ADMIN] Proxy Supabase ativo');
         return;
@@ -268,6 +282,10 @@ function initAdminClient() {
         tenant_credits: 'huvi_admin_tenant_credits',
       };
       return new AdminMockQueryBuilder(keyMap[table] || ('huvi_admin_' + table));
+    },
+    async changeTenantPassword(payload) {
+      console.log('[MOCK] changeTenantPassword chamado com:', payload);
+      return { data: { action: 'mock_updated', user_id: 'mock-id' }, error: null };
     }
   };
   console.log('%c[HUVI ADMIN] Proxy indisponível — MOCK MODE ativado', 'color: #f47001; font-weight: bold;');

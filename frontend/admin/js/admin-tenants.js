@@ -287,6 +287,7 @@ const AdminTenants = (() => {
   async function save(e) {
     e.preventDefault();
     const id = document.getElementById('tenant-edit-id').value;
+    const tenantPassword = document.getElementById('tenant-password').value;
     const payload = {
       name: document.getElementById('tenant-name').value.trim(),
       slug: document.getElementById('tenant-slug').value.trim().toLowerCase().replace(/[^a-z0-9-]/g, '-'),
@@ -304,6 +305,12 @@ const AdminTenants = (() => {
 
     if (!payload.name || !payload.email) {
       showToast('Preencha nome e e-mail', 'error');
+      return;
+    }
+
+    // Validar senha se preenchida
+    if (tenantPassword && tenantPassword.length < 6) {
+      showToast('A senha deve ter pelo menos 6 caracteres', 'error');
       return;
     }
 
@@ -348,6 +355,29 @@ const AdminTenants = (() => {
         }
 
         showToast('Infraestrutura criada com sucesso!', 'success');
+      }
+
+      // Alterar/criar senha mestra do tenant (se preenchida)
+      if (tenantPassword) {
+        try {
+          const { data: pwResult, error: pwError } = await adminSupabase.changeTenantPassword({
+            email: payload.email,
+            password: tenantPassword,
+            full_name: payload.owner_name || payload.name,
+          });
+
+          if (pwError) {
+            const errMsg = typeof pwError === 'string' ? pwError : pwError.message || JSON.stringify(pwError);
+            showToast('Tenant salvo, mas erro na senha: ' + errMsg, 'error');
+            console.error('[HUVI ADMIN] Erro ao alterar senha:', pwError);
+          } else {
+            const action = pwResult?.action === 'created' ? 'criado' : 'atualizado';
+            showToast(`Senha do tenant ${action} com sucesso!`, 'success');
+          }
+        } catch (pwErr) {
+          showToast('Tenant salvo, mas falha ao alterar senha: ' + pwErr.message, 'error');
+          console.error('[HUVI ADMIN] Exceção ao alterar senha:', pwErr);
+        }
       }
 
       closeModal();
@@ -419,6 +449,21 @@ const AdminTenants = (() => {
     document.getElementById('tenant-form').addEventListener('submit', save);
     const resetBtn = document.getElementById('btn-reset-credits');
     if (resetBtn) resetBtn.addEventListener('click', resetTenantCredits);
+
+    // Toggle visibilidade da senha mestra
+    const togglePwBtn = document.getElementById('toggle-tenant-password');
+    if (togglePwBtn) {
+      togglePwBtn.addEventListener('click', () => {
+        const pwInput = document.getElementById('tenant-password');
+        if (pwInput.type === 'password') {
+          pwInput.type = 'text';
+          togglePwBtn.textContent = '🙈';
+        } else {
+          pwInput.type = 'password';
+          togglePwBtn.textContent = '👁️';
+        }
+      });
+    }
     
     // Lógica de envio rápido de link de acesso Global (fora do modal)
     function handleGlobalSendAccess() {

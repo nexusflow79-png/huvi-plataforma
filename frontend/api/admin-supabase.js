@@ -70,6 +70,47 @@ export default async function handler(req, res) {
       query = applyFilters(query, filters);
       result = await query;
 
+    } else if (operation === 'change_tenant_password') {
+      // Operação customizada: criar ou atualizar senha de auth user do tenant
+      const { email, password, full_name } = payload || {};
+      if (!email || !password) {
+        return res.status(400).json({ error: 'Email e senha são obrigatórios' });
+      }
+      if (password.length < 6) {
+        return res.status(400).json({ error: 'A senha deve ter pelo menos 6 caracteres' });
+      }
+
+      // 1. Buscar se já existe um auth user com este e-mail
+      const { data: { users }, error: listError } = await supabase.auth.admin.listUsers();
+      if (listError) {
+        return res.status(500).json({ error: 'Erro ao buscar usuários: ' + listError.message });
+      }
+
+      const existingUser = (users || []).find(u => u.email === email);
+
+      if (existingUser) {
+        // Atualizar a senha do usuário existente
+        const { error: updateError } = await supabase.auth.admin.updateUserById(existingUser.id, {
+          password,
+        });
+        if (updateError) {
+          return res.status(400).json({ error: 'Erro ao atualizar senha: ' + updateError.message });
+        }
+        result = { data: { action: 'updated', user_id: existingUser.id }, error: null };
+      } else {
+        // Criar novo auth user com este e-mail e senha
+        const { data: newUser, error: createError } = await supabase.auth.admin.createUser({
+          email,
+          password,
+          email_confirm: true,
+          user_metadata: { full_name: full_name || '' },
+        });
+        if (createError) {
+          return res.status(400).json({ error: 'Erro ao criar usuário: ' + createError.message });
+        }
+        result = { data: { action: 'created', user_id: newUser?.user?.id }, error: null };
+      }
+
     } else {
       return res.status(400).json({ error: `Invalid operation: "${operation}"` });
     }

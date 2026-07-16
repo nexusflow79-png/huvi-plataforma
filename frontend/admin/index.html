@@ -238,9 +238,12 @@
                 </div>
 
                 <div class="form-group">
-                  <label class="form-label" for="tenant-password">Senha Mestra do Tenant</label>
-                  <input type="password" id="tenant-password" class="form-input" placeholder="Usada pelo administrador do cliente">
-                  <span class="form-help">Usada pelo administrador do cliente</span>
+                  <label class="form-label" for="tenant-password">🔑 Senha Mestra do Tenant</label>
+                  <div style="position:relative;">
+                    <input type="password" id="tenant-password" class="form-input" placeholder="Mínimo 6 caracteres" minlength="6" style="padding-right:44px;">
+                    <button type="button" id="toggle-tenant-password" title="Mostrar/ocultar senha" style="position:absolute; right:8px; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; font-size:18px; color:var(--text-muted); padding:4px;">👁️</button>
+                  </div>
+                  <span class="form-help">Deixe em branco para manter a senha atual. Ao preencher, a senha será definida/alterada no Supabase Auth.</span>
                 </div>
 
                 <div class="form-group">
