@@ -30,24 +30,32 @@ const Opportunities = (() => {
     return str.split('\n').map(p => p.trim()).filter(Boolean).map(p => `<p style="margin-bottom: var(--space-3); line-height: 1.6; text-align: justify;">${escapeHtml(p)}</p>`).join('');
   }
 
-  function formatAuditList(jsonStr, type = 'strengths') {
-    if (!jsonStr) return '-';
-    
-    let parsed = jsonStr;
-    if (typeof jsonStr === 'string') {
-      try {
-        parsed = JSON.parse(jsonStr);
-      } catch (e) {
-        console.warn('[HUVI] Erro ao parsear JSON de audit:', e);
-        return jsonStr.split('\n').map(p => p.trim()).filter(Boolean).map(p => `<p style="margin-bottom: var(--space-2); line-height: 1.5;">${escapeHtml(p)}</p>`).join('');
+  function formatAuditList(input, type = 'strengths') {
+    if (input === null || input === undefined || input === '') return '-';
+
+    let parsed = input;
+    if (typeof input === 'string') {
+      const trimmed = input.trim();
+      if (!trimmed) return '-';
+
+      // Tentar JSON.parse apenas se parecer uma estrutura JSON (começa com [ ou {)
+      if (trimmed.startsWith('[') || trimmed.startsWith('{')) {
+        try {
+          parsed = JSON.parse(trimmed);
+        } catch (e) {
+          console.warn('[HUVI] Falha ao parsear JSON de audit:', e);
+          parsed = input;
+        }
       }
     }
 
+    // 1. Caso seja Array (já materializado ou vindo de JSON.parse)
     if (Array.isArray(parsed)) {
+      if (parsed.length === 0) return '-';
       if (type === 'recommendations') {
         return parsed.map(item => {
-          const rec = typeof item === 'object' && item.recommendation ? item.recommendation : String(item);
-          const rat = typeof item === 'object' && item.rationale ? item.rationale : '';
+          const rec = typeof item === 'object' && item !== null && item.recommendation ? item.recommendation : String(item);
+          const rat = typeof item === 'object' && item !== null && item.rationale ? item.rationale : '';
           return `
             <div style="margin-bottom: var(--space-3); padding: var(--space-3); background: rgba(0,0,0,0.02); border-radius: var(--radius-sm); border-left: 4px solid var(--primary-500);">
               <strong style="color: var(--text-primary); display: block; font-size: var(--font-sm); margin-bottom: 2px;">💡 Recomendação:</strong>
@@ -59,21 +67,42 @@ const Opportunities = (() => {
       } else {
         const icon = type === 'strengths' ? '🟢' : '🔴';
         return `<ul style="margin: 0; padding-left: 0; list-style-type: none;">
-          ${parsed.map(item => `
-            <li style="margin-bottom: var(--space-2); color: var(--text-primary); display: flex; gap: var(--space-2); align-items: flex-start; line-height: 1.5; font-size: var(--font-base);">
-              <span style="flex-shrink: 0; font-size: 10px; margin-top: 3px;">${icon}</span>
-              <span>${escapeHtml(item)}</span>
-            </li>
-          `).join('')}
+          ${parsed.map(item => {
+            const text = typeof item === 'object' && item !== null ? (item.text || item.description || JSON.stringify(item)) : String(item);
+            return `
+              <li style="margin-bottom: var(--space-2); color: var(--text-primary); display: flex; gap: var(--space-2); align-items: flex-start; line-height: 1.5; font-size: var(--font-base);">
+                <span style="flex-shrink: 0; font-size: 10px; margin-top: 3px;">${icon}</span>
+                <span>${escapeHtml(text)}</span>
+              </li>
+            `;
+          }).join('')}
         </ul>`;
       }
     }
 
-    // Fallback caso não seja array
-    if (typeof jsonStr === 'string') {
-      return jsonStr.split('\n').map(p => p.trim()).filter(Boolean).map(p => `<p style="margin-bottom: var(--space-2); line-height: 1.5;">${escapeHtml(p)}</p>`).join('');
+    // 2. Caso seja Objeto (não-array)
+    if (typeof parsed === 'object' && parsed !== null) {
+      if (Array.isArray(parsed[type])) {
+        return formatAuditList(parsed[type], type);
+      }
+      if (type === 'recommendations' && (parsed.recommendation || parsed.text)) {
+        const rec = parsed.recommendation || parsed.text || '';
+        const rat = parsed.rationale || parsed.reason || '';
+        return `
+          <div style="margin-bottom: var(--space-3); padding: var(--space-3); background: rgba(0,0,0,0.02); border-radius: var(--radius-sm); border-left: 4px solid var(--primary-500);">
+            <strong style="color: var(--text-primary); display: block; font-size: var(--font-sm); margin-bottom: 2px;">💡 Recomendação:</strong>
+            <span style="color: var(--text-primary); display: block; line-height: 1.5; font-size: var(--font-base); font-weight: 500;">${escapeHtml(rec)}</span>
+            ${rat ? `<span style="color: var(--text-secondary); font-size: var(--font-xs); display: block; margin-top: var(--space-2); border-top: 1px dashed var(--surface-300); padding-top: var(--space-2); line-height: 1.4;">💬 Justificativa: ${escapeHtml(rat)}</span>` : ''}
+          </div>
+        `;
+      }
     }
-    return '-';
+
+    // 3. Fallback para Texto Simples (string não-JSON)
+    const strValue = typeof parsed === 'string' ? parsed : String(parsed);
+    const paragraphs = strValue.split('\n').map(p => p.trim()).filter(Boolean);
+    if (paragraphs.length === 0) return '-';
+    return paragraphs.map(p => `<p style="margin-bottom: var(--space-2); line-height: 1.5;">${escapeHtml(p)}</p>`).join('');
   }
 
   const enterpriseKeywords = [
