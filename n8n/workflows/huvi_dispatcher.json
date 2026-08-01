@@ -212,13 +212,13 @@
           "string": [
             {
               "operation": "contains",
-              "value1": "={{ $('SendWhatsApp').first().error ? JSON.stringify($('SendWhatsApp').first().error) : '' }}",
+              "value1": "={{ $('SendWhatsApp').first().error?.description || '' }}",
               "value2": "exists\":false"
             },
             {
               "operation": "equal",
-              "value1": "={{ String($('MergeData').first().json.phone || '').replace(/\\D/g, '').length }}",
-              "value2": "13"
+              "value1": "={{ [12, 13].includes(String($('MergeData').first().json.phone || '').replace(/\\D/g, '').length) ? 'yes' : 'no' }}",
+              "value2": "yes"
             }
           ]
         }
@@ -247,7 +247,7 @@
         "resource": "messages-api",
         "operation": "send-text",
         "instanceName": "={{ $('MergeData').first().json.evolution_instance }}",
-        "remoteJid": "={{ (() => { let num = String($('MergeData').first().json.phone || '').replace(/\\D/g, ''); if (num.length === 11) { num = num.substring(0,2) + num.substring(3); } return '55' + num; })() }}@s.whatsapp.net",
+        "remoteJid": "={{ (() => { let num = String($('MergeData').first().json.phone || '').replace(/\\D/g, ''); if (num.length > 0 && !num.startsWith('55')) { num = '55' + num; } if (num.length === 13) { num = num.substring(0, 4) + num.substring(5); } else if (num.length === 12) { num = num.substring(0, 4) + '9' + num.substring(4); } return num; })() }}@s.whatsapp.net",
         "messageText": "={{ $('MergeData').first().json.message }}",
         "options_message": {}
       },
