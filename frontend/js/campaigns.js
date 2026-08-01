@@ -145,6 +145,185 @@ const Campaigns = (() => {
     bodyText += 'Atenciosamente,\nEquipe HUVI';
     return { subject: subjectText, body: bodyText };
   }
+
+  let isGeneratingCampaign = false;
+
+  async function fetchCampaignFromGateway(camp, offer) {
+    if (isGeneratingCampaign) {
+      return { success: false, blocked: true, reason: 'concurrency' };
+    }
+
+    isGeneratingCampaign = true;
+
+    const opp = camp.opportunities || {};
+    const companyName = String(opp.company_name || 'sua empresa').trim();
+    const segment = String(opp.segment || opp.category || '').trim();
+    const offerName = String((offer && offer.name) ? offer.name : 'nossas solu\u00e7\u00f5es').trim();
+    const offerDescription = String((offer && offer.description) ? offer.description : '').trim();
+
+    // Validação estrita de channel: aceitar SOMENTE "whatsapp" ou "email"
+    const rawChannel = String(camp.channel || '').toLowerCase().trim();
+    if (rawChannel !== 'whatsapp' && rawChannel !== 'email') {
+      showToast('Canal de campanha inv\u00e1lido. Selecione WhatsApp ou E-mail.', 'error');
+      isGeneratingCampaign = false;
+      return { success: false, blocked: true, status: 400 };
+    }
+    const channel = rawChannel;
+
+    // Payload contendo APENAS os 5 campos autorizados
+    const payload = {
+      company_name: companyName,
+      segment: segment,
+      offer_name: offerName,
+      offer_description: offerDescription,
+      channel: channel
+    };
+
+    const gatewayUrl = `${HUVI_CONFIG.NEXUS_GATEWAY_URL}/v1/campaigns/generate`;
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000);
+
+    const btnApprove = document.getElementById('btn-approve-camp');
+    const btnSaveDraft = document.getElementById('btn-save-draft-camp');
+    const btnSend = document.getElementById('btn-send-camp');
+    const originalApproveText = btnApprove ? btnApprove.textContent : '';
+
+    if (btnApprove) {
+      btnApprove.disabled = true;
+      btnApprove.textContent = 'Gerando via IA\u2026';
+    }
+    if (btnSaveDraft) btnSaveDraft.disabled = true;
+    if (btnSend) btnSend.disabled = true;
+
+    try {
+      let sessionRes = await supabase.auth.getSession();
+      let token = sessionRes?.data?.session?.access_token;
+
+      if (!token) {
+        const refreshRes = await supabase.auth.refreshSession();
+        token = refreshRes?.data?.session?.access_token;
+      }
+
+      if (!token) {
+        showToast('Sua sess\u00e3o expirou. Entre novamente para continuar.', 'error');
+        return { success: false, blocked: true, status: 401 };
+      }
+
+      async function executeRequest(authToken) {
+        return await fetch(gatewayUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken}`,
+            'X-Nexus-Product': 'huvi'
+          },
+          body: JSON.stringify(payload),
+          signal: controller.signal
+        });
+      }
+
+      let response = await executeRequest(token);
+
+      if (response.status === 401) {
+        const refreshRes = await supabase.auth.refreshSession();
+        const newToken = refreshRes?.data?.session?.access_token;
+        if (newToken) {
+          response = await executeRequest(newToken);
+        }
+      }
+
+      if (response.status === 401) {
+        showToast('Sua sess\u00e3o expirou. Entre novamente para continuar.', 'error');
+        return { success: false, blocked: true, status: 401 };
+      }
+
+      if (response.status === 403) {
+        showToast('N\u00e3o foi poss\u00edvel validar o contexto da sua conta. Entre novamente ou contate o suporte.', 'error');
+        return { success: false, blocked: true, status: 403 };
+      }
+
+      // Todos os 4xx (exceto 429) -> Bloquear sem fallback
+      if (response.status >= 400 && response.status < 500 && response.status !== 429) {
+        showToast('Requisi\u00e7\u00e3o de gera\u00e7\u00e3o n\u00e3o permitida.', 'error');
+        return { success: false, blocked: true, status: response.status };
+      }
+
+      // 429 -> Fallback permitido
+      if (response.status === 429) {
+        showToast('Limite de requisi\u00e7\u00f5es do Gateway atingido. Gerando mensagem no modo padr\u00e3o\u2026', 'warning');
+        return { success: false, fallback: true, status: 429 };
+      }
+
+      // 5xx -> Fallback permitido
+      if (response.status >= 500) {
+        showToast('Servi\u00e7o de IA indispon\u00edvel no momento. Gerando mensagem no modo padr\u00e3o\u2026', 'warning');
+        return { success: false, fallback: true, status: response.status };
+      }
+
+      if (!response.ok) {
+        showToast('Erro inesperado ao gerar campanha.', 'error');
+        return { success: false, blocked: true, status: response.status };
+      }
+
+      const data = await response.json();
+      const messages = data && Array.isArray(data.messages) ? data.messages : null;
+
+      if (!messages || messages.length !== 3) {
+        showToast('Resposta do servi\u00e7o de IA em formato inv\u00e1lido. Tente novamente.', 'error');
+        return { success: false, blocked: true, status: 200 };
+      }
+
+      const steps = messages.map(m => m.step).sort((a, b) => a - b);
+      const stepsValid = steps.length === 3 && steps[0] === 1 && steps[1] === 2 && steps[2] === 3;
+      if (!stepsValid) {
+        showToast('Resposta do servi\u00e7o de IA em formato inv\u00e1lido. Tente novamente.', 'error');
+        return { success: false, blocked: true, status: 200 };
+      }
+
+      const isValidStructure = messages.every(m => {
+        if (typeof m !== 'object' || m === null) return false;
+        if (typeof m.delay_days !== 'number' || !Number.isFinite(m.delay_days) || m.delay_days < 0) return false;
+        if (typeof m.message !== 'string' || m.message.trim().length === 0) return false;
+        if (channel === 'email') {
+          if (typeof m.subject !== 'string' || m.subject.trim().length === 0) return false;
+        } else {
+          if (m.subject !== null && m.subject !== undefined && typeof m.subject !== 'string') return false;
+        }
+        return true;
+      });
+
+      if (!isValidStructure) {
+        const isDev = window.isMockMode || location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+        if (isDev) {
+          console.warn('[HUVI] Resposta do Gateway com formato inv\u00e1lido.');
+        }
+        showToast('Resposta do servi\u00e7o de IA em formato inv\u00e1lido. Tente novamente.', 'error');
+        return { success: false, blocked: true, status: 200 };
+      }
+
+      messages.sort((a, b) => a.step - b.step);
+
+      return { success: true, messages };
+
+    } catch (err) {
+      if (err && err.name === 'AbortError') {
+        showToast('Conex\u00e3o com o servi\u00e7o de IA expirou. Gerando mensagem no modo padr\u00e3o\u2026', 'warning');
+        return { success: false, fallback: true, error: 'timeout' };
+      }
+      showToast('Falha na conex\u00e3o com o servi\u00e7o de IA. Gerando mensagem no modo padr\u00e3o\u2026', 'warning');
+      return { success: false, fallback: true, error: 'network' };
+
+    } finally {
+      clearTimeout(timeoutId);
+      isGeneratingCampaign = false;
+      if (btnApprove) {
+        btnApprove.disabled = false;
+        btnApprove.textContent = originalApproveText;
+      }
+      if (btnSaveDraft) btnSaveDraft.disabled = false;
+      if (btnSend) btnSend.disabled = false;
+    }
+  }
   async function openMessageModal(camp) {
     currentCampaign = camp;
     document.getElementById('camp-msg-id').value = camp.id;
@@ -260,7 +439,7 @@ const Campaigns = (() => {
 
       const opp = camp.opportunities || {};
       const companyName = opp.company_name || 'sua empresa';
-      const ofLabel = (offer && offer.name) ? offer.name : 'nossas solu\u00e7\u00f5es';
+      const ofLabel = (offer && offer.name) ? offer.name : 'nossas soluções';
 
       // Passo 1: usar mensagem existente ou gerar fallback
       let step1Msg = camp.message || '';
@@ -275,15 +454,50 @@ const Campaigns = (() => {
         }
       }
 
-      // Passos 2 e 3: follow-ups contextualizados
-      const step2Msg = `Ol\u00e1! Recentemente falamos sobre como ${ofLabel} pode ajudar a ${companyName}. Gostar\u00edamos de saber se h\u00e1 interesse em agendar uma conversa r\u00e1pida. Que tal?`;
-      const step3Msg = `Ol\u00e1! Esta \u00e9 nossa \u00faltima mensagem sobre ${ofLabel}. Acreditamos que a ${companyName} tem o perfil ideal para o que oferecemos. Se tiver interesse, basta responder aqui.`;
+      let generatedMessages = null;
+      let isBlocked = false;
 
-      tempMessagesMatrix = [
-        { step: 1, delay_days: 0, subject: step1Subject || 'Abordagem Inicial', message: step1Msg },
-        { step: 2, delay_days: 3, subject: 'Follow-up \u2014 ' + ofLabel, message: step2Msg },
-        { step: 3, delay_days: 7, subject: '\u00daltimo contato \u2014 ' + ofLabel, message: step3Msg }
-      ];
+      const gatewayRes = await fetchCampaignFromGateway(camp, offer);
+
+      if (gatewayRes.blocked) {
+        isBlocked = true;
+      } else if (gatewayRes.success && gatewayRes.messages) {
+        generatedMessages = gatewayRes.messages;
+      }
+
+      if (isBlocked) {
+        tabsContainer.classList.add('hidden');
+        return;
+      }
+
+      if (generatedMessages) {
+        tempMessagesMatrix = generatedMessages;
+      } else {
+        const step2Msg = `Olá! Recentemente falamos sobre como ${ofLabel} pode ajudar a ${companyName}. Gostaríamos de saber se há interesse em agendar uma conversa rápida. Que tal?`;
+
+        const step3Msg = `Olá! Esta é nossa última mensagem sobre ${ofLabel}. Acreditamos que a ${companyName} tem o perfil ideal para o que oferecemos. Se tiver interesse, basta responder aqui.`;
+
+        tempMessagesMatrix = [
+          {
+            step: 1,
+            delay_days: 0,
+            subject: step1Subject || 'Abordagem Inicial',
+            message: step1Msg
+          },
+          {
+            step: 2,
+            delay_days: 3,
+            subject: 'Follow-up — ' + ofLabel,
+            message: step2Msg
+          },
+          {
+            step: 3,
+            delay_days: 7,
+            subject: 'Último contato — ' + ofLabel,
+            message: step3Msg
+          }
+        ];
+      }
 
       // Mostrar abas
       tabsContainer.classList.remove('hidden');
@@ -589,7 +803,7 @@ const Campaigns = (() => {
     load();
   }
 
-  // ── Excluir selecionados ──
+  // -- Excluir selecionados --
   async function deleteSelected() {
     const ids = [...listEl.querySelectorAll('.chk-camp:checked')].map(cb => cb.value);
     if (!ids.length) { showToast('Nenhum item selecionado.', 'info'); return; }
@@ -603,7 +817,7 @@ const Campaigns = (() => {
     load();
   }
 
-  // ── Alternar estado do botão Excluir Selecionados ──
+  // -- Alternar estado do botão Excluir Selecionados --
   function toggleDeleteSelectedBtn() {
     const btn = document.getElementById('camp-btn-delete-selected');
     if (!btn) return;
