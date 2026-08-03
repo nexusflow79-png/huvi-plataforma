@@ -4,13 +4,7 @@
  */
 const AdminAuth = (() => {
   function isLoggedIn() {
-    return AdminSafeStorage.get('huvi_admin_session') === 'active';
-  }
-
-  function sha256(str) {
-    const encoder = new TextEncoder();
-    return crypto.subtle.digest('SHA-256', encoder.encode(str))
-      .then(buf => Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join(''));
+    return AdminSafeStorage.get('huvi_admin_session') === 'active' && !!AdminSafeStorage.get('huvi_admin_session_token');
   }
 
   async function login(username, password) {
@@ -20,13 +14,19 @@ const AdminAuth = (() => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password }),
       });
+
+      if (res.status === 503) {
+        return { success: false, message: 'Configuração administrativa indisponível no servidor. Entre em contato com o suporte.' };
+      }
+
       const result = await res.json();
-      if (result.success) {
+      if (result.success && result.token) {
+        AdminSafeStorage.purgeLegacy();
         AdminSafeStorage.set('huvi_admin_session', 'active');
         AdminSafeStorage.set('huvi_admin_session_token', result.token);
         return { success: true };
       }
-      return result; // Retorna mensagem de erro do backend
+      return result; // Retorna mensagem de erro do backend (ex: Credenciais inválidas)
     } catch (err) {
       return { success: false, message: 'Erro de conexão com o servidor' };
     }
@@ -49,31 +49,41 @@ const AdminAuth = (() => {
     return 'Superadmin';
   }
 
-  async function updateCredentials(newUser, newPass) {
-    alert('As credenciais do Superadmin agora são gerenciadas pelas Environment Variables na Vercel.');
+  async function updateCredentials() {
+    alert('As credenciais do Superadmin são gerenciadas exclusivamente pelas Environment Variables na Vercel.');
   }
 
   function init() {
+    // Purgar resíduos antigos de sessões em localStorage
+    AdminSafeStorage.purgeLegacy();
+
     const form = document.getElementById('admin-login-form');
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      try {
-        const user = document.getElementById('admin-login-user').value.trim();
-        const pass = document.getElementById('admin-login-pass').value;
+    if (form) {
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        try {
+          const user = document.getElementById('admin-login-user').value.trim();
+          const pass = document.getElementById('admin-login-pass').value;
 
-        const result = await login(user, pass);
-        if (result.success) {
-          showScreen('app');
-          AdminApp.onLogin();
-        } else {
-          showToast(result.message, 'error');
+          const result = await login(user, pass);
+          if (result.success) {
+            showScreen('app');
+            if (typeof AdminApp !== 'undefined' && AdminApp.onLogin) {
+              AdminApp.onLogin();
+            }
+          } else {
+            showToast(result.message, 'error');
+          }
+        } catch (err) {
+          showToast('Erro ao autenticar: ' + err.message, 'error');
         }
-      } catch (err) {
-        showToast('Erro ao autenticar: ' + err.message, 'error');
-      }
-    });
+      });
+    }
 
-    document.getElementById('admin-logout-btn').addEventListener('click', logout);
+    const logoutBtn = document.getElementById('admin-logout-btn');
+    if (logoutBtn) {
+      logoutBtn.addEventListener('click', logout);
+    }
 
     // Check session
     if (isLoggedIn()) {

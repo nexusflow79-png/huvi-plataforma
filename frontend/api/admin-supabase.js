@@ -1,34 +1,47 @@
 import { createClient } from '@supabase/supabase-js';
+import { checkRequiredEnvVars, verifyAdminToken } from './_admin-session.js';
 
 // Proxy Serverless para acessar o Supabase com Service Role Key
-// Isso protege a Service Role Key no backend Vercel.
+// Exige token de sessão assinado e válido no cabeçalho Authorization.
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
+  res.setHeader('Cache-Control', 'no-store');
+  res.setHeader('Pragma', 'no-cache');
 
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
 
-  // Verifica token enviado pelo AdminProxyQueryBuilder do frontend
-  const authHeader = req.headers['authorization'];
-  if (!authHeader || authHeader !== 'Bearer huvi-superadmin-token-v1') {
-    return res.status(401).json({ error: 'Unauthorized' });
+  // 1. Verificar variáveis obrigatórias do servidor
+  if (!checkRequiredEnvVars()) {
+    return res.status(503).json({ error: 'Configuração administrativa indisponível no servidor' });
   }
 
-  // Contrato de campos alinhado com AdminProxyQueryBuilder (admin-client.js)
-  const { operation, table, payload, filters, orderCol, orderAsc, isSingle } = req.body;
+  // 2. Extrair e verificar o token do cabeçalho Authorization
+  const authHeader = req.headers['authorization'] || '';
+  if (!authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'Sessão administrativa ausente ou inválida' });
+  }
 
+  const tokenString = authHeader.substring(7).trim();
+  const authResult = verifyAdminToken(tokenString);
+
+  if (!authResult.valid) {
+    if (authResult.configError) {
+      return res.status(503).json({ error: 'Configuração administrativa indisponível no servidor' });
+    }
+    return res.status(401).json({ error: 'Sessão administrativa inválida ou expirada' });
+  }
+
+  // 3. Obter configurações do Supabase
   const supabaseUrl = process.env.SUPABASE_URL;
   const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
   if (!supabaseUrl || !supabaseKey) {
-    return res.status(500).json({ error: 'Server configuration error' });
+    return res.status(503).json({ error: 'Configuração administrativa indisponível no servidor' });
   }
+
+  // Contrato de campos alinhado com AdminProxyQueryBuilder (admin-client.js)
+  const { operation, table, payload, filters, orderCol, orderAsc, isSingle } = req.body || {};
 
   const supabase = createClient(supabaseUrl, supabaseKey);
 
@@ -55,7 +68,6 @@ export default async function handler(req, res) {
 
     } else if (operation === 'insert') {
       result = await supabase.from(table).insert(payload).select();
-      // Se isSingle, retorna o primeiro item (compatível com .single() do cliente)
       if (isSingle && result.data && Array.isArray(result.data)) {
         result = { ...result, data: result.data[0] || null };
       }
@@ -71,7 +83,6 @@ export default async function handler(req, res) {
       result = await query;
 
     } else if (operation === 'change_tenant_password') {
-      // Operação customizada: criar ou atualizar senha de auth user do tenant
       const { email, password, full_name } = payload || {};
       if (!email || !password) {
         return res.status(400).json({ error: 'Email e senha são obrigatórios' });
@@ -80,7 +91,6 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: 'A senha deve ter pelo menos 6 caracteres' });
       }
 
-      // 1. Buscar se já existe um auth user com este e-mail
       const { data: { users }, error: listError } = await supabase.auth.admin.listUsers();
       if (listError) {
         return res.status(500).json({ error: 'Erro ao buscar usuários: ' + listError.message });
@@ -89,7 +99,6 @@ export default async function handler(req, res) {
       const existingUser = (users || []).find(u => u.email === email);
 
       if (existingUser) {
-        // Atualizar a senha do usuário existente
         const { error: updateError } = await supabase.auth.admin.updateUserById(existingUser.id, {
           password,
         });
@@ -98,7 +107,6 @@ export default async function handler(req, res) {
         }
         result = { data: { action: 'updated', user_id: existingUser.id }, error: null };
       } else {
-        // Criar novo auth user com este e-mail e senha
         const { data: newUser, error: createError } = await supabase.auth.admin.createUser({
           email,
           password,
@@ -125,4 +133,3 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: err.message });
   }
 }
-
